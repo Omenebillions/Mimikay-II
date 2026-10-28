@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mpm-website",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mpm-db",
+      "database_id": "YOUR_D1_DATABASE_ID_HERE",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "mpm-images"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ADMIN_PASSPHRASE": "mpm2026"
+  }
+}

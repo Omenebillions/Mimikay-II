@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "Event": {
+      "title": "Event",
+      "description": "An event or press story published by Mimikay Political Movement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "youtubeId": { "type": "string" },
+        "eventDate": { "type": "string" },
+        "location": { "type": "string" },
+        "published": { "type": "boolean" },
+        "featured": { "type": "boolean" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "slug", "title", "summary", "content", "imageUrl", "eventDate", "published"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global website configuration and contact settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "heroHeadline": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "announcementEnabled": { "type": "boolean" },
+        "announcementText": { "type": "string" },
+        "announcementLink": { "type": "string" },
+        "whatsappGroupUrl": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["heroHeadline", "heroSubtitle"]
+    },
+    "CandidatePopup": {
+      "title": "CandidatePopup",
+      "description": "Swipable campaign candidate pop-up modal item (e.g. APC candidates)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "candidateName": { "type": "string" },
+        "candidateOffice": { "type": "string" },
+        "party": { "type": "string" },
+        "headline": { "type": "string" },
+        "message": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "ctaText": { "type": "string" },
+        "ctaUrl": { "type": "string" },
+        "orderIndex": { "type": "number" },
+        "enabled": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "candidateName", "headline", "message", "enabled"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator account information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "superadmin"] },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Collection of MPM news, communiqués, and events"
+    },
+    "/settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Website global configuration"
+    },
+    "/candidates/{candidateId}": {
+      "schema": "CandidatePopup",
+      "description": "Swipable candidate and campaign popups"
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminUser",
+      "description": "Authorized administrator user mapping"
+    }
+  }
+}
