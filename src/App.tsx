@@ -189,7 +189,7 @@ export default function App() {
         Skip to main content
       </a>
 
-      {/* Breaking Political News Marquee (Moves from Left to Right) */}
+      {/* Breaking Political News Marquee (Moves from Right to Left) */}
       {isPublicPage && <AnnouncementStrip settings={settings} />}
 
       {/* Primary Sticky Header & Navigation */}

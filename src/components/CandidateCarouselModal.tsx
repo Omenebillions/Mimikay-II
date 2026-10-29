@@ -3,10 +3,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
-  ShieldCheck,
   Fingerprint,
-  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { APCCandidate } from '../types';
 import { APC_LOGO_DATA_URL } from '../data/apcLogo';
@@ -17,20 +15,6 @@ interface Props {
   onClose: () => void;
   onNavigate?: (path: string) => void;
 }
-
-// Authentic All Progressives Congress (APC) Logo Component using user-supplied logo
-const APCLogo: React.FC<{ className?: string }> = ({ className = 'h-8' }) => {
-  return (
-    <div className={`inline-flex items-center gap-1.5 bg-white px-2 py-1 rounded-xl border border-gray-200 shadow-xs ${className}`}>
-      <img
-        src={APC_LOGO_DATA_URL}
-        alt="APC - All Progressives Congress Logo"
-        className="h-7 w-auto object-contain flex-shrink-0 rounded-xs"
-      />
-      <span className="font-black text-xs tracking-wider text-[#0072bc]">APC</span>
-    </div>
-  );
-};
 
 export const CandidateCarouselModal: React.FC<Props> = ({
   candidates,
@@ -74,7 +58,7 @@ export const CandidateCarouselModal: React.FC<Props> = ({
     setCurrentIndex((prev) => (prev - 1 + candidates.length) % candidates.length);
   };
 
-  // Touch & Mouse Drag Swipe handling (swipable from left to right)
+  // Touch & Mouse Drag Swipe handling (smooth left/right swiping)
   const handleTouchStart = (e: React.TouchEvent) => {
     setDragStartX(e.touches[0].clientX);
     setDragCurrentX(e.touches[0].clientX);
@@ -87,9 +71,9 @@ export const CandidateCarouselModal: React.FC<Props> = ({
   const handleTouchEnd = () => {
     if (dragStartX !== null && dragCurrentX !== null) {
       const diff = dragStartX - dragCurrentX;
-      if (diff > 45) {
+      if (diff > 40) {
         handleNext();
-      } else if (diff < -45) {
+      } else if (diff < -40) {
         handlePrev();
       }
     }
@@ -111,9 +95,9 @@ export const CandidateCarouselModal: React.FC<Props> = ({
   const handleMouseUp = () => {
     if (dragStartX !== null && dragCurrentX !== null) {
       const diff = dragStartX - dragCurrentX;
-      if (diff > 50) {
+      if (diff > 40) {
         handleNext();
-      } else if (diff < -50) {
+      } else if (diff < -40) {
         handlePrev();
       }
     }
@@ -121,14 +105,13 @@ export const CandidateCarouselModal: React.FC<Props> = ({
     setDragCurrentX(null);
   };
 
-  const handleCta = () => {
+  const handleImageClick = () => {
     if (!current.ctaUrl) return;
     if (current.ctaUrl.startsWith('/') && onNavigate) {
       onNavigate(current.ctaUrl);
       onClose();
     } else {
       window.open(current.ctaUrl, '_blank', 'noopener,noreferrer');
-      onClose();
     }
   };
 
@@ -136,8 +119,8 @@ export const CandidateCarouselModal: React.FC<Props> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="candidate-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs select-none"
+      aria-label="Campaign Pop-up"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm select-none"
       onClick={onClose}
     >
       <div
@@ -149,185 +132,121 @@ export const CandidateCarouselModal: React.FC<Props> = ({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="relative bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-gray-100 flex flex-col cursor-grab active:cursor-grabbing animate-in zoom-in-95 duration-200"
+        className="relative max-w-lg sm:max-w-xl w-full flex flex-col items-center cursor-grab active:cursor-grabbing animate-in zoom-in-95 duration-200"
       >
-        {/* Top Header Bar with APC Logo, VOTE banner & Fingerprint stamp */}
-        <div className="bg-[#008037] text-white px-4 sm:px-6 py-3 flex items-center justify-between border-b border-[#00682b]">
-          <div className="flex items-center gap-2.5">
-            {/* Official APC Logo */}
-            <APCLogo />
-
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs uppercase font-black tracking-wider text-amber-300 block leading-tight">
-                  VOTE APC
-                </span>
-                <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.2 rounded font-bold">
-                  2027
-                </span>
-              </div>
-              <span className="text-[11px] text-emerald-100 font-medium hidden sm:block">
-                Mimikay Political Movement Endorsed Slate
-              </span>
-            </div>
-          </div>
-
+        {/* Top Controls Overlay: APC Logo, VOTE Badge, and Close Button */}
+        <div className="w-full flex items-center justify-between pb-2.5 px-1">
           <div className="flex items-center gap-2">
-            {/* Fingerprint Ballot Stamp in header */}
-            <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-xs px-2.5 py-1 rounded-full border border-white/20">
-              <Fingerprint className="w-4 h-4 text-emerald-300 stroke-[2.3]" />
-              <span className="text-[11px] font-black tracking-wider text-white uppercase">
-                VOTE
-              </span>
+            {/* Subtle APC Logo & VOTE Badge */}
+            <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-md">
+              <img
+                src={APC_LOGO_DATA_URL}
+                alt="APC Logo"
+                className="h-5 w-auto object-contain rounded-xs"
+              />
+              <span className="font-black text-xs text-amber-300 tracking-wider">APC</span>
+              <span className="w-1 h-1 rounded-full bg-white/40" />
+              <Fingerprint className="w-3.5 h-3.5 text-emerald-400 stroke-[2.4]" />
+              <span className="text-[11px] font-bold tracking-wider text-white uppercase">VOTE</span>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Slide Index Counter */}
+            {candidates.length > 1 && (
+              <div className="bg-black/60 backdrop-blur-md text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full border border-white/15">
+                {currentIndex + 1} / {candidates.length}
+              </div>
+            )}
           </div>
+
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 backdrop-blur-md transition-colors shadow-lg focus:outline-none"
+            aria-label="Close pop-up"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Candidate Image & Visual Identity with Fingerprint Watermark */}
-        <div className="relative h-64 sm:h-72 w-full bg-gray-900 overflow-hidden">
+        {/* Pure Image Display Container (No Extra Text / Clutter) */}
+        <div
+          onClick={current.ctaUrl ? handleImageClick : undefined}
+          className={`relative w-full rounded-2xl overflow-hidden bg-black/40 shadow-2xl border border-white/15 flex items-center justify-center ${
+            current.ctaUrl ? 'cursor-pointer group' : ''
+          }`}
+          style={{ maxHeight: '82vh' }}
+        >
           <img
             src={current.imageUrl}
-            alt={current.name}
-            className="w-full h-full object-cover object-top transition-transform duration-300"
+            alt={current.name || 'Campaign Pop-up Image'}
+            className="w-full h-auto max-h-[78vh] object-contain block mx-auto transition-transform duration-200"
             draggable={false}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
 
-          {/* Top Indicators: Candidate Index & VOTE APC Fingerprint Stamp */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-            <div className="bg-black/60 backdrop-blur-xs text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5">
-              <span>Candidate {currentIndex + 1} of {candidates.length}</span>
+          {/* Previous / Next Arrow Buttons Floating on Image */}
+          {candidates.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrev();
+                }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center border border-white/20 backdrop-blur-md transition-all shadow-lg focus:outline-none"
+                aria-label="Previous pop-up"
+                title="Previous (Swipe Right)"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center border border-white/20 backdrop-blur-md transition-all shadow-lg focus:outline-none"
+                aria-label="Next pop-up"
+                title="Next (Swipe Left)"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* Subtle link badge if URL is attached */}
+          {current.ctaUrl && (
+            <div className="absolute bottom-3 right-3 bg-black/70 hover:bg-black/90 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow-md">
+              <span>{current.ctaText || 'Learn More'}</span>
+              <ExternalLink className="w-3 h-3 text-amber-300" />
             </div>
-
-            {/* Prominent VOTE Ballot Thumbprint Stamp */}
-            <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-red-600 to-emerald-600 text-white px-3 py-1 rounded-full shadow-lg border border-white/30 animate-pulse">
-              <Fingerprint className="w-4 h-4 text-white stroke-[2.5]" />
-              <span className="text-xs font-black tracking-widest uppercase">
-                VOTE APC
-              </span>
-            </div>
-          </div>
-
-          {/* Swipe Left/Right Hint */}
-          <div className="absolute top-12 right-3 bg-black/40 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-full hidden sm:block border border-white/10">
-            ⇄ Swipe left / right
-          </div>
-
-          {/* Bottom Candidate Details on Image */}
-          <div className="absolute bottom-3 left-4 right-4 text-white space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-[#008037] text-white px-2 py-0.5 rounded-md shadow-xs">
-                <CheckCircle2 className="w-3 h-3 text-emerald-200" />
-                <span>OFFICIAL ENDORSEMENT</span>
-              </span>
-              <span className="text-xs text-amber-300 font-bold uppercase tracking-wider">
-                {current.party}
-              </span>
-            </div>
-
-            <h3
-              id="candidate-modal-title"
-              className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight"
-            >
-              {current.name}
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-200 font-medium">
-              {current.office}
-            </p>
-          </div>
+          )}
         </div>
 
-        {/* Candidate Details & Resolution with Thumbprint Voting Motif */}
-        <div className="p-5 sm:p-7 space-y-4">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-[#008037] uppercase tracking-wider flex items-center gap-1.5">
-              <Fingerprint className="w-3.5 h-3.5 text-[#008037]" />
-              <span>{current.headline}</span>
-            </span>
-            <p className="text-sm text-gray-700 leading-relaxed pt-1">
-              {current.message}
-            </p>
-          </div>
-
-          {/* Ballot Thumbprint Action Card */}
-          <div className="p-3 bg-gradient-to-r from-emerald-50 via-blue-50 to-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-[#008037] text-white flex items-center justify-center shadow-xs flex-shrink-0">
-                <Fingerprint className="w-6 h-6 text-white stroke-[2.3]" />
-              </div>
-              <div className="leading-tight">
-                <div className="text-xs font-black text-gray-900 tracking-wide flex items-center gap-1">
-                  <span>BALLOT THUMBPRINT:</span>
-                  <span className="text-[#008037] font-black">VOTE APC</span>
-                </div>
-                <div className="text-[11px] text-gray-600 mt-0.5">
-                  Stamp your voter card for grassroots progress &amp; unity
-                </div>
-              </div>
-            </div>
-
-            <APCLogo />
-          </div>
-
-          {/* Call to action & Navigation buttons */}
-          <div className="pt-1 flex flex-col sm:flex-row items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCta}
-              className="w-full sm:flex-1 py-3 px-5 bg-[#008037] hover:bg-[#0a5d2c] text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-            >
-              <Fingerprint className="w-4 h-4 text-emerald-200" />
-              <span>{current.ctaText || 'VOTE APC · Support Candidate'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-
-            {/* Previous & Next Arrows */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="p-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
-                aria-label="Previous candidate"
-                title="Previous candidate (Swipe Right)"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNext}
-                className="p-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
-                aria-label="Next candidate"
-                title="Next candidate (Swipe Left)"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-2 pt-1">
+        {/* Bottom Swipe Dots Indicator */}
+        {candidates.length > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-3">
             {candidates.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setCurrentIndex(i)}
-                aria-label={`Jump to candidate ${i + 1}`}
-                className={`h-2 rounded-full transition-all ${
-                  currentIndex === i ? 'w-6 bg-[#008037]' : 'w-2 bg-gray-300 hover:bg-gray-400'
+                aria-label={`Jump to pop-up ${i + 1}`}
+                className={`h-2 rounded-full transition-all duration-200 ${
+                  currentIndex === i
+                    ? 'w-6 bg-white shadow-md'
+                    : 'w-2 bg-white/40 hover:bg-white/70'
                 }`}
               />
             ))}
           </div>
+        )}
+
+        {/* Small subtle mobile swipe hint */}
+        <div className="text-[11px] text-white/60 pt-1 tracking-wide">
+          ⇄ Swipe left or right
         </div>
       </div>
     </div>

@@ -17,12 +17,6 @@
       "migrations_dir": "./migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "IMAGES",
-      "bucket_name": "mpm-images"
-    }
-  ],
   "vars": {
     "ENVIRONMENT": "production",
     "ADMIN_PASSPHRASE": "mpm2026"

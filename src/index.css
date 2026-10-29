@@ -38,22 +38,23 @@
   background: #94a3b8;
 }
 
-/* Continuous Left-to-Right Marquee */
-@keyframes marquee-ltr {
+/* Continuous Right-to-Left Marquee */
+@keyframes marquee-rtl {
   0% {
-    transform: translateX(-50%);
-  }
-  100% {
     transform: translateX(0%);
   }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
-.animate-marquee-ltr {
+.animate-marquee-rtl {
   display: flex;
   width: max-content;
-  animation: marquee-ltr 25s linear infinite;
+  animation: marquee-rtl 25s linear infinite;
 }
 
-.animate-marquee-ltr:hover {
+.animate-marquee-rtl:hover {
   animation-play-state: paused;
 }
+

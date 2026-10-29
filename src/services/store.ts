@@ -11,6 +11,16 @@ const STORAGE_KEYS = {
   ADMIN_EMAIL: 'mpm_admin_email_v1',
 };
 
+// Clean any accidental base64 image strings to ensure zero base64 database storage
+function sanitizeImageUrl(url: string | undefined, fallback: string): string {
+  if (!url) return fallback;
+  // If url is a large base64 image, discard it and return the authentic Blogger fallback
+  if (url.startsWith('data:image/') && url.length > 500) {
+    return fallback;
+  }
+  return url;
+}
+
 class StoreService {
   private events: MPMEvent[] = [];
   private settings: SiteSettings = SEED_SETTINGS;
@@ -35,12 +45,16 @@ class StoreService {
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
       }
 
-      // 2. Load Events (idempotent seed initialization)
+      // 2. Load Events (idempotent seed initialization & sanitize base64)
       const savedEvents = localStorage.getItem(STORAGE_KEYS.EVENTS);
       if (savedEvents) {
         const parsed = JSON.parse(savedEvents) as MPMEvent[];
-        const existingIds = new Set(parsed.map((e) => e.id));
-        const merged = [...parsed];
+        const sanitized = parsed.map((e, idx) => ({
+          ...e,
+          imageUrl: sanitizeImageUrl(e.imageUrl, SEED_EVENTS[idx % SEED_EVENTS.length].imageUrl),
+        }));
+        const existingIds = new Set(sanitized.map((e) => e.id));
+        const merged = [...sanitized];
         for (const seed of SEED_EVENTS) {
           if (!existingIds.has(seed.id)) {
             merged.push(seed);
@@ -61,12 +75,15 @@ class StoreService {
         localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(this.campaigns));
       }
 
-      // 4. Load APC Candidates Popups
+      // 4. Load Candidates Popups (purging Omo-Agege and sanitizing base64)
       const savedCandidates = localStorage.getItem(STORAGE_KEYS.CANDIDATES);
       if (savedCandidates) {
-        const parsedCand = (JSON.parse(savedCandidates) as APCCandidate[]).filter(
-          (c) => c.id !== 'cand-5' && !c.name?.toLowerCase().includes('omo-agege')
-        );
+        const parsedCand = (JSON.parse(savedCandidates) as APCCandidate[])
+          .filter((c) => c.id !== 'cand-5' && !c.name?.toLowerCase().includes('omo-agege'))
+          .map((c, idx) => ({
+            ...c,
+            imageUrl: sanitizeImageUrl(c.imageUrl, SEED_CANDIDATES[idx % SEED_CANDIDATES.length].imageUrl),
+          }));
         const existingCandIds = new Set(parsedCand.map((c) => c.id));
         const mergedCand = [...parsedCand];
         for (const seed of SEED_CANDIDATES) {
@@ -82,6 +99,9 @@ class StoreService {
       }
 
       this.initialized = true;
+
+      // Asynchronously sync with Cloudflare D1 server-side API if available
+      this.syncWithServer();
     } catch (err) {
       console.error('Error initializing MPM store:', err);
       this.settings = { ...SEED_SETTINGS };
@@ -89,6 +109,92 @@ class StoreService {
       this.campaigns = [...SEED_CAMPAIGNS];
       this.candidates = [...SEED_CANDIDATES];
     }
+  }
+
+  // Background hydration from Cloudflare D1 SQL
+  private async syncWithServer(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      // 1. Fetch settings from D1
+      const settingsRes = await fetch('/api/settings').catch(() => null);
+      if (settingsRes && settingsRes.ok) {
+        const serverSettings = await settingsRes.json();
+        if (serverSettings && serverSettings.hero_headline) {
+          this.settings = {
+            ...this.settings,
+            heroHeadline: serverSettings.hero_headline || this.settings.heroHeadline,
+            heroSubtitle: serverSettings.hero_subtitle || this.settings.heroSubtitle,
+            announcementText: serverSettings.announcement_text || this.settings.announcementText,
+            blogUrl: serverSettings.blog_url || this.settings.blogUrl,
+            whatsappGroupUrl: serverSettings.whatsapp_group_url || this.settings.whatsappGroupUrl,
+          };
+          window.dispatchEvent(new CustomEvent('mpm-settings-updated', { detail: this.settings }));
+        }
+      }
+
+      // 2. Fetch events from D1
+      const eventsRes = await fetch('/api/events').catch(() => null);
+      if (eventsRes && eventsRes.ok) {
+        const serverEvents = await eventsRes.json();
+        if (Array.isArray(serverEvents) && serverEvents.length > 0) {
+          const mapped: MPMEvent[] = serverEvents.map((r: any) => ({
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+            content: r.content,
+            imageUrl: r.image_url,
+            youtubeId: r.youtube_id || undefined,
+            eventDate: r.event_date,
+            location: r.location || '',
+            published: Boolean(r.published),
+            featured: Boolean(r.featured),
+            category: r.category || 'General',
+            createdAt: r.created_at || new Date().toISOString(),
+            updatedAt: r.updated_at || new Date().toISOString(),
+          }));
+          this.events = mapped;
+          localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events));
+          window.dispatchEvent(new CustomEvent('mpm-events-updated', { detail: this.events }));
+        }
+      }
+
+      // 3. Fetch candidates from D1
+      const candRes = await fetch('/api/candidates').catch(() => null);
+      if (candRes && candRes.ok) {
+        const serverCands = await candRes.json();
+        if (Array.isArray(serverCands) && serverCands.length > 0) {
+          const mappedCand: APCCandidate[] = serverCands.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            office: r.office || '',
+            party: r.party || 'All Progressives Congress (APC)',
+            headline: r.headline || '',
+            message: r.message || '',
+            imageUrl: r.image_url,
+            ctaText: r.cta_text || 'Learn More',
+            ctaUrl: r.cta_url || '',
+            orderIndex: r.order_index ?? 1,
+            enabled: Boolean(r.enabled),
+          }));
+          this.candidates = mappedCand.filter(
+            (c) => c.id !== 'cand-5' && !c.name?.toLowerCase().includes('omo-agege')
+          );
+          localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(this.candidates));
+          window.dispatchEvent(new CustomEvent('mpm-candidates-updated', { detail: this.candidates }));
+        }
+      }
+    } catch {
+      // Graceful offline fallback
+    }
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer mpm2026',
+      'X-Admin-Email': this.getAdminEmail() || 'tintvillenigeria@gmail.com',
+    };
   }
 
   public getPillars(): CorePillar[] {
@@ -106,6 +212,12 @@ class StoreService {
     try {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
       window.dispatchEvent(new CustomEvent('mpm-settings-updated', { detail: this.settings }));
+      // Server-side write to Cloudflare D1
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(this.settings),
+      }).catch(() => null);
     } catch (err) {
       console.error('Failed to save settings:', err);
     }
@@ -174,6 +286,12 @@ class StoreService {
     try {
       localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events));
       window.dispatchEvent(new CustomEvent('mpm-events-updated', { detail: this.events }));
+      // Server-side write to Cloudflare D1
+      fetch('/api/events', {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(saved),
+      }).catch(() => null);
     } catch (err) {
       console.error('Failed to save event:', err);
     }
@@ -188,6 +306,11 @@ class StoreService {
       try {
         localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events));
         window.dispatchEvent(new CustomEvent('mpm-events-updated', { detail: this.events }));
+        // Server-side write to Cloudflare D1
+        fetch(`/api/events/${id}`, {
+          method: 'DELETE',
+          headers: this.getAuthHeaders(),
+        }).catch(() => null);
       } catch (err) {
         console.error('Failed to delete event:', err);
       }
@@ -226,6 +349,12 @@ class StoreService {
     try {
       localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(this.candidates));
       window.dispatchEvent(new CustomEvent('mpm-candidates-updated', { detail: this.candidates }));
+      // Server-side write to Cloudflare D1
+      fetch('/api/candidates', {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(saved),
+      }).catch(() => null);
     } catch (err) {
       console.error('Failed to save candidate:', err);
     }
@@ -239,6 +368,11 @@ class StoreService {
       try {
         localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(this.candidates));
         window.dispatchEvent(new CustomEvent('mpm-candidates-updated', { detail: this.candidates }));
+        // Server-side write to Cloudflare D1
+        fetch(`/api/candidates/${id}`, {
+          method: 'DELETE',
+          headers: this.getAuthHeaders(),
+        }).catch(() => null);
       } catch (err) {
         console.error('Failed to delete candidate:', err);
       }
@@ -324,6 +458,12 @@ class StoreService {
     try {
       localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(this.campaigns));
       window.dispatchEvent(new CustomEvent('mpm-campaigns-updated', { detail: this.campaigns }));
+      // Server-side write to Cloudflare D1
+      fetch('/api/campaigns', {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(saved),
+      }).catch(() => null);
     } catch (err) {
       console.error('Failed to save campaign:', err);
     }
@@ -337,6 +477,11 @@ class StoreService {
       try {
         localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(this.campaigns));
         window.dispatchEvent(new CustomEvent('mpm-campaigns-updated', { detail: this.campaigns }));
+        // Server-side write to Cloudflare D1
+        fetch(`/api/campaigns/${id}`, {
+          method: 'DELETE',
+          headers: this.getAuthHeaders(),
+        }).catch(() => null);
       } catch (err) {
         console.error('Failed to delete campaign:', err);
       }

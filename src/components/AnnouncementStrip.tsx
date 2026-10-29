@@ -46,9 +46,9 @@ export const AnnouncementStrip: React.FC<Props> = ({ settings }) => {
       className="bg-[#008037] text-white text-xs sm:text-sm font-medium border-b border-[#00682b] relative z-40 overflow-hidden shadow-xs"
     >
       <div className="flex items-center justify-between">
-        {/* Left-to-Right Moving Marquee Stream */}
+        {/* Right-to-Left Moving Marquee Stream */}
         <div className="flex-1 overflow-hidden py-2 cursor-pointer" title="Pause on hover">
-          <div className="animate-marquee-ltr flex items-center whitespace-nowrap">
+          <div className="animate-marquee-rtl flex items-center whitespace-nowrap">
             {marqueeItem}
             {marqueeItem}
             {marqueeItem}

@@ -1,4 +1,5 @@
 -- D1 SQL Schema and Idempotent Seed Migration for Mimikay Political Movement (MPM)
+-- 100% Free Plan Compatible (Cloudflare D1 without R2 or paid services)
 
 CREATE TABLE IF NOT EXISTS site_settings (
   id TEXT PRIMARY KEY DEFAULT 'current',
@@ -61,6 +62,21 @@ CREATE TABLE IF NOT EXISTS campaigns (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS candidates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  office TEXT DEFAULT '',
+  party TEXT DEFAULT 'All Progressives Congress (APC)',
+  headline TEXT DEFAULT '',
+  message TEXT DEFAULT '',
+  image_url TEXT NOT NULL,
+  cta_text TEXT DEFAULT 'Learn More',
+  cta_url TEXT DEFAULT '',
+  order_index INTEGER DEFAULT 1,
+  enabled INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Idempotent Seed: Site Settings
 INSERT OR IGNORE INTO site_settings (
   id, hero_headline, hero_subtitle, announcement_enabled, announcement_text,
@@ -87,7 +103,7 @@ INSERT OR IGNORE INTO site_settings (
   'https://wa.me/2349013506747'
 );
 
--- Idempotent Seed: 4 Existing Events from Original Blogger Template
+-- Idempotent Seed: 4 Authoritative Events from Original Blogger Template
 INSERT OR IGNORE INTO events (
   id, slug, title, summary, content, image_url, youtube_id, event_date, location, published, featured, category
 ) VALUES (
@@ -175,4 +191,69 @@ INSERT OR IGNORE INTO campaigns (
   0,
   3,
   3
+);
+
+-- Idempotent Seed: 4 Active Endorsed APC Candidates / Pop-ups
+INSERT OR IGNORE INTO candidates (
+  id, name, office, party, headline, message, image_url, cta_text, cta_url, order_index, enabled
+) VALUES (
+  'cand-1',
+  'President Bola Ahmed Tinubu (GCFR)',
+  'President & Commander-in-Chief of the Armed Forces',
+  'All Progressives Congress (APC)',
+  '2027 Re-election Endorsement',
+  'The Mimikay Political Movement reaffirms resolute support for President Bola Ahmed Tinubu, championing bold economic reforms, national stability, and sustained grassroots infrastructural investment.',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjWAbqWDgeCxoAPGcxO0BQwKxzEAGo28sBzWpHs7IEzsdniEpK2mFrdfL6GMX03Zod3h71GQlTJO_ZG57S-LLt3xIw4sd0w8QLyMxVql-kNbqKjIzSBvYsWUIo-B66fDh4-oxEoMttftlmSEhC9yd0VVIJ8Nvffxma9AVCz2PqfFN3_JMN0c4MXaE099Qo/s1280/WhatsApp%20Image%202026-02-28%20at%201.39.57%20PM%20%281%29.jpeg',
+  'View Endorsement Report',
+  '/events/official-inauguration-2027-endorsement',
+  1,
+  1
+);
+
+INSERT OR IGNORE INTO candidates (
+  id, name, office, party, headline, message, image_url, cta_text, cta_url, order_index, enabled
+) VALUES (
+  'cand-2',
+  'Senator Ede Dafinone',
+  'Senator, Delta Central Senatorial District',
+  'All Progressives Congress (APC)',
+  'Official Second-Term Endorsement',
+  'MPM declared full endorsement of Distinguished Senator Ede Dafinone following his declaration at Oharisi Primary School, Ughelli, celebrating his accessible representation, community empowerment, and legislative excellence.',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhOlmF_JY9OMjfcfzKhGgy36pi3uA5PAs-wUOp30Cg02c_uH2xJ-2apUVr5cDkutDeVIywo55T3MWXlUcBsrl5zVvNM5ClB78k6xWMD1Qer5wj-F90HQdwyuyLIzP3ZUcSJx_GbK5rtbVMQ-kry9pLX26ZNUylqIlBfTyPiR54qPYrpOKosFusTZH3ohhU/s1080/ad593995-48ad-4cbb-982c-130a84c79c31.jfif',
+  'Watch Video Briefing',
+  '/events/mpm-endorses-senator-ede-dafinone',
+  2,
+  1
+);
+
+INSERT OR IGNORE INTO candidates (
+  id, name, office, party, headline, message, image_url, cta_text, cta_url, order_index, enabled
+) VALUES (
+  'cand-3',
+  'Rt. Hon. Sheriff Francis Oborevwori',
+  'Executive Governor of Delta State',
+  'Government of Delta State',
+  'Grassroots Infrastructure Partner',
+  'Commended by Mimikay Political Movement for transformative public infrastructure, including the landmark Ughelli Flyover project and community-centered urban development across Delta Central.',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgHhqDs4VLHx1ACulFLyqpEJB6krpRbvDxHHnMyk7VPLcSIhUA9CaugzehXJe7NfTRTNWe_bhnOM7L0gG14PerP_OhZW4AK4pq2Qcz7LrylYgeP57zJ91cCTm6P-oLpg_DG2NvaUWIAKzw5SlY_R3YfIdDOBt027O5rNtswaKDiW48bu0_AMP2eMCeztNQ/s800/Sherrif-Oborevwori.jpeg',
+  'Read Flyover Milestone',
+  '/events/ughelli-flyover-milestone-groundbreaking',
+  3,
+  1
+);
+
+INSERT OR IGNORE INTO candidates (
+  id, name, office, party, headline, message, image_url, cta_text, cta_url, order_index, enabled
+) VALUES (
+  'cand-4',
+  'Hon. Oghenekaro Akpososo',
+  'The Convener, Mimikay Political Movement',
+  'Voice for Delta Grassroot Development',
+  'Grassroots Convener & Civic Champion',
+  'Leading the grassroots coalition across all wards in Delta State, coordinating community consultations, voter education, and holding leadership accountable to the welfare of the people.',
+  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi9O_vAsT0SyOLFjj41ygsEQwNlI8KO9JYZj125DxPgg7NiikBxn-S7n15qN8UYjfsW9uB9GKyj6O60tZnkTTr0Y30-K8RsNBYdFXb5aW8eWxz0CZ41mDB3UrZ9-f_vx66vq6RLjIVqruB-1lfFhCPRrR5Hf6iAbGZ2VwYR4fkurvj26hT7e3TZHm8z1Ps/s1080/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%282%29.jpg',
+  'Read Convener Profile',
+  '/about',
+  4,
+  1
 );

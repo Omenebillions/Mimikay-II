@@ -42,8 +42,11 @@ import {
   ArrowRight,
   ShieldCheck,
   Fingerprint,
+  X,
+  Info,
 } from 'lucide-react';
 import { CandidateCarouselModal } from '../components/CandidateCarouselModal';
+import { MPM_MEDIA_LIBRARY } from '../data/mediaLibrary';
 
 interface Props {
   settings: SiteSettings;
@@ -193,17 +196,17 @@ export const AdminPage: React.FC<Props> = ({
     setIsAuthenticated(false);
   };
 
-  // --- Candidate Pop-up Handlers ---
+  // --- Pop-up Image Handlers (Upload image and display) ---
   const handleOpenNewCandidate = () => {
     setIsNewCandidate(true);
     setEditingCandidate({
-      name: '',
+      name: `Pop-up Image #${candidates.length + 1}`,
       office: '',
       party: 'All Progressives Congress (APC)',
-      headline: 'APC Grassroots Endorsement',
-      message: 'Enter declaration details and grassroots mandate for this APC candidate...',
-      imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjWAbqWDgeCxoAPGcxO0BQwKxzEAGo28sBzWpHs7IEzsdniEpK2mFrdfL6GMX03Zod3h71GQlTJO_ZG57S-LLt3xIw4sd0w8QLyMxVql-kNbqKjIzSBvYsWUIo-B66fDh4-oxEoMttftlmSEhC9yd0VVIJ8Nvffxma9AVCz2PqfFN3_JMN0c4MXaE099Qo/s1280/WhatsApp%20Image%202026-02-28%20at%201.39.57%20PM%20%281%29.jpeg',
-      ctaText: 'Join WhatsApp Coalition',
+      headline: '',
+      message: '',
+      imageUrl: '',
+      ctaText: 'Learn More',
       ctaUrl: settings.whatsappGroupUrl,
       orderIndex: candidates.length + 1,
       enabled: true,
@@ -212,26 +215,41 @@ export const AdminPage: React.FC<Props> = ({
 
   const handleSaveCandidate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingCandidate || !editingCandidate.name) return;
+    if (!editingCandidate || !editingCandidate.imageUrl) {
+      showBanner('Please upload or enter an image URL for the pop-up.');
+      return;
+    }
 
-    store.saveCandidate(editingCandidate as any);
+    const name = editingCandidate.name?.trim() || `Pop-up #${candidates.length + 1}`;
+    store.saveCandidate({
+      ...editingCandidate,
+      name,
+      party: editingCandidate.party || 'All Progressives Congress (APC)',
+      office: editingCandidate.office || '',
+      headline: editingCandidate.headline || '',
+      message: editingCandidate.message || '',
+      ctaText: editingCandidate.ctaText || 'Learn More',
+      ctaUrl: editingCandidate.ctaUrl || '',
+      imageUrl: editingCandidate.imageUrl,
+      enabled: editingCandidate.enabled ?? true,
+    } as any);
     setEditingCandidate(null);
     setCandidates(store.getCandidates(false));
-    showBanner(`APC candidate "${editingCandidate.name}" saved successfully.`);
+    showBanner(`Pop-up image "${name}" successfully saved to carousel!`);
   };
 
   const handleDeleteCandidate = (id: string, name: string) => {
-    if (window.confirm(`Delete candidate "${name}" from the landing page pop-up carousel?`)) {
+    if (window.confirm(`Delete pop-up image "${name}" from the landing page carousel?`)) {
       store.deleteCandidate(id);
       setCandidates(store.getCandidates(false));
-      showBanner(`Candidate "${name}" removed.`);
+      showBanner(`Pop-up image "${name}" removed.`);
     }
   };
 
   const handleToggleCandidate = (candidate: APCCandidate) => {
     store.saveCandidate({ ...candidate, enabled: !candidate.enabled });
     setCandidates(store.getCandidates(false));
-    showBanner(`Candidate ${candidate.name} is now ${!candidate.enabled ? 'Enabled' : 'Disabled'}.`);
+    showBanner(`Pop-up is now ${!candidate.enabled ? 'Active' : 'Hidden'}.`);
   };
 
   // --- Event Handlers ---
@@ -276,23 +294,7 @@ export const AdminPage: React.FC<Props> = ({
     }
   };
 
-  // Image upload handler
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'event' | 'candidate') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      if (target === 'candidate' && editingCandidate) {
-        setEditingCandidate({ ...editingCandidate, imageUrl: result });
-      } else if (target === 'event' && editingEvent) {
-        setEditingEvent({ ...editingEvent, imageUrl: result });
-      }
-      showBanner('Image processed and attached.');
-    };
-    reader.readAsDataURL(file);
-  };
+  // (Direct device file-to-base64 uploads removed to adhere to zero-base64 database storage and 100% Free Plan)
 
   // --- Settings Handlers ---
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -502,8 +504,8 @@ export const AdminPage: React.FC<Props> = ({
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
-            <Flag className="w-4 h-4 inline mr-1.5" />
-            APC Candidates Pop-ups ({candidates.length})
+            <ImageIcon className="w-4 h-4 inline mr-1.5" />
+            Landing Pop-up Images ({candidates.length})
           </button>
 
           <button
@@ -558,21 +560,21 @@ export const AdminPage: React.FC<Props> = ({
 
       {/* Main Tab Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* ================= TAB: APC CANDIDATES POP-UPS ================= */}
+        {/* ================= TAB: POP-UP IMAGES (SWIPABLE) ================= */}
         {activeTab === 'candidates' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-gray-900">
-                    APC Candidates Pop-up Showcase (Swipable Left-to-Right)
+                    Landing Page Pop-up Images (Swipable)
                   </h2>
                   <span className="text-xs font-semibold bg-emerald-50 text-[#008037] px-2.5 py-0.5 rounded-full">
-                    Landing Page Modal
+                    Modal Carousel ({candidates.length})
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Upload, edit, and reorder the APC candidates displayed in the swipable landing page modal.
+                  Upload images to display in the landing page modal pop-up. Visitors can swipe left and right to view each image.
                 </p>
               </div>
 
@@ -582,9 +584,9 @@ export const AdminPage: React.FC<Props> = ({
                   onClick={() => setShowCandidatePreview(true)}
                   className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#008037] text-xs font-bold rounded-xl border border-emerald-200 transition-colors shadow-2xs"
                 >
-                  <img src={APC_LOGO_DATA_URL} alt="APC" className="h-5 w-auto object-contain rounded-2xs" />
+                  <img src={APC_LOGO_DATA_URL} alt="APC" className="h-4 w-auto object-contain rounded-2xs" />
                   <Fingerprint className="w-4 h-4 text-[#008037] stroke-[2.3]" />
-                  <span>Preview VOTE APC Pop-up</span>
+                  <span>Preview Swipable Pop-up</span>
                 </button>
 
                 <button
@@ -593,64 +595,88 @@ export const AdminPage: React.FC<Props> = ({
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#008037] hover:bg-[#0a5d2c] text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Upload / Add Candidate</span>
+                  <span>Upload Pop-up Image</span>
                 </button>
               </div>
             </div>
 
-            {/* Candidates Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Quick Upload Banner */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#008037] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                  <ImageIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">
+                    Easy Pop-up Uploader
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Select an image from your device or paste a URL. The image will display cleanly in the landing page swipe modal.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenNewCandidate}
+                className="w-full sm:w-auto px-4 py-2 bg-[#008037] hover:bg-[#0a5d2c] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Image Now</span>
+              </button>
+            </div>
+
+            {/* Pop-up Images Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {candidates.map((cand, idx) => (
                 <div
                   key={cand.id}
-                  className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
                 >
                   <div>
-                    <div className="relative h-48 w-full bg-gray-900">
+                    {/* Image View */}
+                    <div className="relative h-56 w-full bg-gray-900 flex items-center justify-center overflow-hidden">
                       <img
                         src={cand.imageUrl}
                         alt={cand.name}
-                        className="w-full h-full object-cover object-top"
+                        className="w-full h-full object-contain bg-black/30"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute top-3 left-3 bg-black/60 text-white text-xs font-bold px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                      <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-xs text-white text-xs font-bold px-2.5 py-0.5 rounded-full border border-white/20">
                         #{idx + 1} in Carousel
                       </div>
                       <div className="absolute top-3 right-3">
                         <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            cand.enabled ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'
+                          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-xs ${
+                            cand.enabled ? 'bg-emerald-500 text-white' : 'bg-gray-500 text-white'
                           }`}
                         >
                           {cand.enabled ? 'Active' : 'Hidden'}
                         </span>
                       </div>
-                      <div className="absolute bottom-2 left-3 right-3 text-white">
-                        <div className="text-xs text-emerald-300 font-bold">{cand.party}</div>
-                        <h3 className="font-bold text-base leading-snug truncate">{cand.name}</h3>
-                        <p className="text-xs text-gray-300 truncate">{cand.office}</p>
-                      </div>
                     </div>
 
-                    <div className="p-4 space-y-2">
-                      <div className="text-xs font-bold text-[#008037] line-clamp-1">
-                        {cand.headline}
-                      </div>
-                      <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
-                        {cand.message}
-                      </p>
-                      <div className="pt-1 text-[11px] text-gray-500">
-                        <strong>CTA:</strong> {cand.ctaText} → <span className="font-mono text-gray-400">{cand.ctaUrl}</span>
-                      </div>
+                    <div className="p-4 space-y-1.5">
+                      <h3 className="font-bold text-sm text-gray-900 truncate">
+                        {cand.name || `Pop-up #${idx + 1}`}
+                      </h3>
+                      {cand.ctaUrl && (
+                        <p className="text-[11px] text-gray-500 truncate">
+                          <strong>Link:</strong> {cand.ctaUrl}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                     <button
                       onClick={() => handleToggleCandidate(cand)}
-                      className="text-xs font-semibold text-gray-600 hover:text-gray-900"
+                      className={`text-xs font-semibold px-2 py-1 rounded-md transition-colors ${
+                        cand.enabled
+                          ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                          : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                      }`}
                     >
-                      {cand.enabled ? 'Deactivate' : 'Activate'}
+                      {cand.enabled ? 'Hide' : 'Activate'}
                     </button>
 
                     <div className="flex items-center gap-1">
@@ -659,16 +685,16 @@ export const AdminPage: React.FC<Props> = ({
                           setIsNewCandidate(false);
                           setEditingCandidate({ ...cand });
                         }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
-                        title="Edit Candidate"
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit / Replace Image"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
 
                       <button
                         onClick={() => handleDeleteCandidate(cand.id, cand.name)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Delete Candidate"
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Pop-up Image"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -678,174 +704,154 @@ export const AdminPage: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* Candidate Edit / Create Modal */}
+            {/* Pop-up Image Upload / Edit Modal */}
             {editingCandidate && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-                <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-gray-200">
-                  <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {isNewCandidate ? 'Add APC Candidate to Pop-up' : 'Edit Candidate Pop-up'}
-                    </h3>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3.5 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-[#008037]" />
+                      <h3 className="text-base font-bold text-gray-900">
+                        {isNewCandidate ? 'Upload Pop-up Image' : 'Edit Pop-up Image'}
+                      </h3>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setEditingCandidate(null)}
-                      className="text-gray-400 hover:text-gray-700"
+                      className="p-1 text-gray-400 hover:text-gray-700 rounded-lg"
                     >
-                      ✕
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
                   <form onSubmit={handleSaveCandidate} className="pt-4 space-y-4">
+                    {/* Image URL & Free Tier Selection */}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                          Pop-up Image URL *
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          value={editingCandidate.imageUrl || ''}
+                          onChange={(e) => setEditingCandidate({ ...editingCandidate, imageUrl: e.target.value })}
+                          placeholder="https://blogger.googleusercontent.com/... or https://..."
+                          className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#008037]"
+                        />
+                      </div>
+
+                      {/* Free Tier Notice */}
+                      <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/70 text-[11px] text-emerald-900 flex items-start gap-2">
+                        <Info className="w-4 h-4 text-[#008037] flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong>100% Free Tier Image Hosting:</strong> Direct device upload is disabled to eliminate Cloudflare R2 and paid storage fees. Enter any image URL (Blogger, free Cloudinary, free Imgur) or pick an existing MPM photo below.
+                        </div>
+                      </div>
+
+                      {/* Quick 1-Click MPM Media Library Selector */}
+                      <div>
+                        <span className="block text-[11px] font-bold text-gray-700 mb-1.5">
+                          Or Select from Verified MPM Media Library:
+                        </span>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1.5 bg-gray-50 rounded-xl border border-gray-200">
+                          {MPM_MEDIA_LIBRARY.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setEditingCandidate({ ...editingCandidate, imageUrl: item.url })}
+                              className={`group relative rounded-lg overflow-hidden border text-left transition-all aspect-video ${
+                                editingCandidate.imageUrl === item.url
+                                  ? 'border-[#008037] ring-2 ring-[#008037]'
+                                  : 'border-gray-200 hover:border-gray-400'
+                              }`}
+                              title={item.title}
+                            >
+                              <img
+                                src={item.url}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Live Image Preview */}
+                      {editingCandidate.imageUrl ? (
+                        <div className="mt-2 relative rounded-xl overflow-hidden bg-gray-900 border border-gray-200 max-h-56 flex items-center justify-center">
+                          <img
+                            src={editingCandidate.imageUrl}
+                            alt="Preview"
+                            className="w-full h-auto max-h-52 object-contain"
+                          />
+                          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded font-medium">
+                            Live Preview
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-600 font-medium">
+                          ⚠ Please enter or select an image URL above to preview.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Optional Label / Title */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Candidate Name *
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Pop-up Title / Label <span className="text-gray-400 font-normal">(Optional)</span>
                       </label>
                       <input
                         type="text"
-                        required
                         value={editingCandidate.name || ''}
                         onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })}
-                        placeholder="e.g. President Bola Ahmed Tinubu (GCFR)"
-                        className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
+                        placeholder={`Pop-up #${candidates.length + 1}`}
+                        className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Office / Position *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={editingCandidate.office || ''}
-                          onChange={(e) => setEditingCandidate({ ...editingCandidate, office: e.target.value })}
-                          placeholder="e.g. Senator, Delta Central"
-                          className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Party Affiliation
-                        </label>
-                        <input
-                          type="text"
-                          value={editingCandidate.party || 'All Progressives Congress (APC)'}
-                          onChange={(e) => setEditingCandidate({ ...editingCandidate, party: e.target.value })}
-                          className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
+                    {/* Optional Link on Click */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Endorsement Headline *
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Link URL on Click <span className="text-gray-400 font-normal">(Optional)</span>
                       </label>
                       <input
                         type="text"
-                        required
-                        value={editingCandidate.headline || ''}
-                        onChange={(e) => setEditingCandidate({ ...editingCandidate, headline: e.target.value })}
-                        placeholder="e.g. 2027 Re-election Endorsement"
-                        className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
+                        value={editingCandidate.ctaUrl || ''}
+                        onChange={(e) => setEditingCandidate({ ...editingCandidate, ctaUrl: e.target.value })}
+                        placeholder="https://chat.whatsapp.com/... or https://..."
+                        className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Endorsement Summary / Bio *
-                      </label>
-                      <textarea
-                        required
-                        rows={3}
-                        value={editingCandidate.message || ''}
-                        onChange={(e) => setEditingCandidate({ ...editingCandidate, message: e.target.value })}
-                        placeholder="Describe the candidate's achievements and the movement's endorsement resolution..."
-                        className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Candidate Photo & File Upload */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Candidate Photo URL / File Upload
-                      </label>
-                      <input
-                        type="url"
-                        value={editingCandidate.imageUrl || ''}
-                        onChange={(e) => setEditingCandidate({ ...editingCandidate, imageUrl: e.target.value })}
-                        placeholder="Paste image URL..."
-                        className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                      />
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg">
-                          <ImageIcon className="w-3.5 h-3.5" />
-                          <span>Upload Image File</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageUpload(e, 'candidate')}
-                            className="hidden"
-                          />
-                        </label>
-                        {editingCandidate.imageUrl && (
-                          <span className="text-xs text-gray-500 truncate max-w-xs">Photo attached</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          CTA Button Text
-                        </label>
-                        <input
-                          type="text"
-                          value={editingCandidate.ctaText || 'Learn More'}
-                          onChange={(e) => setEditingCandidate({ ...editingCandidate, ctaText: e.target.value })}
-                          className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          CTA Destination Link
-                        </label>
-                        <input
-                          type="text"
-                          value={editingCandidate.ctaUrl || settings.whatsappGroupUrl}
-                          onChange={(e) => setEditingCandidate({ ...editingCandidate, ctaUrl: e.target.value })}
-                          className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-6 pt-2">
+                    {/* Active toggle */}
+                    <div className="pt-1">
                       <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
                         <input
                           type="checkbox"
                           checked={editingCandidate.enabled ?? true}
                           onChange={(e) => setEditingCandidate({ ...editingCandidate, enabled: e.target.checked })}
-                          className="rounded text-[#008037]"
+                          className="rounded text-[#008037] focus:ring-[#008037]"
                         />
                         <span>Active in Carousel</span>
                       </label>
                     </div>
 
-                    <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                    {/* Actions */}
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-2.5">
                       <button
                         type="button"
                         onClick={() => setEditingCandidate(null)}
-                        className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl"
+                        className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2.5 text-xs font-semibold bg-[#008037] hover:bg-[#0a5d2c] text-white rounded-xl shadow-xs"
+                        className="px-5 py-2.5 text-xs font-bold bg-[#008037] hover:bg-[#0a5d2c] text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
                       >
-                        Save Candidate
+                        <Save className="w-4 h-4" />
+                        <span>Save &amp; Display Pop-up</span>
                       </button>
                     </div>
                   </form>
@@ -1060,32 +1066,71 @@ export const AdminPage: React.FC<Props> = ({
                       </div>
                     </div>
 
-                    {/* Image URL & File Upload */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Featured Image URL / File Upload
-                      </label>
-                      <input
-                        type="url"
-                        value={editingEvent.imageUrl || ''}
-                        onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })}
-                        className="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
-                      />
-                      <div className="mt-2 flex items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg">
-                          <ImageIcon className="w-3.5 h-3.5" />
-                          <span>Choose New Image File</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageUpload(e, 'event')}
-                            className="hidden"
-                          />
+                    {/* Image URL & Free Tier Selection */}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Featured Image URL *
                         </label>
-                        {editingEvent.imageUrl && (
-                          <span className="text-xs text-gray-500">Image attached</span>
-                        )}
+                        <input
+                          type="url"
+                          required
+                          value={editingEvent.imageUrl || ''}
+                          onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })}
+                          placeholder="https://blogger.googleusercontent.com/... or https://..."
+                          className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#008037]"
+                        />
                       </div>
+
+                      {/* Free Tier Notice */}
+                      <div className="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/70 text-[11px] text-emerald-900 flex items-start gap-2">
+                        <Info className="w-4 h-4 text-[#008037] flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong>100% Free Hosting:</strong> Enter existing image URLs (Blogger, free Cloudinary, free Imgur) or pick from the official MPM media library below. Direct device uploads are disabled to avoid paid storage.
+                        </div>
+                      </div>
+
+                      {/* Quick 1-Click MPM Media Library Selector */}
+                      <div>
+                        <span className="block text-[11px] font-bold text-gray-700 mb-1.5">
+                          Or Select from Verified MPM Media Library:
+                        </span>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1.5 bg-gray-50 rounded-xl border border-gray-200">
+                          {MPM_MEDIA_LIBRARY.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setEditingEvent({ ...editingEvent, imageUrl: item.url })}
+                              className={`group relative rounded-lg overflow-hidden border text-left transition-all aspect-video ${
+                                editingEvent.imageUrl === item.url
+                                  ? 'border-[#008037] ring-2 ring-[#008037]'
+                                  : 'border-gray-200 hover:border-gray-400'
+                              }`}
+                              title={item.title}
+                            >
+                              <img
+                                src={item.url}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Live Image Preview */}
+                      {editingEvent.imageUrl && (
+                        <div className="mt-2 relative rounded-xl overflow-hidden bg-gray-900 border border-gray-200 max-h-48 flex items-center justify-center">
+                          <img
+                            src={editingEvent.imageUrl}
+                            alt="Preview"
+                            className="w-full h-auto max-h-44 object-contain"
+                          />
+                          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded font-medium">
+                            Live Preview
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -1324,42 +1369,74 @@ export const AdminPage: React.FC<Props> = ({
           </div>
         )}
 
-        {/* ================= TAB: CLOUDFLARE & FIREBASE ================= */}
+        {/* ================= TAB: CLOUDFLARE 100% FREE TIER ARCHITECTURE ================= */}
         {activeTab === 'cloudflare' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Cloudflare &amp; Firebase Dual Engine</h2>
+              <h2 className="text-xl font-bold text-gray-900">100% Free Plan Deployment (No Paid Storage)</h2>
               <p className="text-xs text-gray-500">
-                Production-ready configuration supporting Firebase Authentication &amp; Firestore, alongside Cloudflare Workers, D1 and R2.
+                Architected to operate completely within Cloudflare's Free Plan using Cloudflare Pages &amp; Cloudflare D1. Zero Cloudflare R2, zero paid storage, and zero billing requirements.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Cloudflare Pages + D1 Card */}
               <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
-                <div className="flex items-center gap-2 text-amber-600 font-bold">
-                  <ShieldCheck className="w-5 h-5" />
-                  <span>Firebase Authentication &amp; Firestore</span>
+                <div className="flex items-center gap-2 text-[#008037] font-bold">
+                  <Database className="w-5 h-5" />
+                  <span>Cloudflare Pages + D1 Database ($0.00 Free Tier)</span>
                 </div>
-                <p className="text-xs text-gray-600">
-                  Provisioned for project <code className="font-mono text-gray-800">youfi-748e3</code> with admin gate for <strong className="text-gray-900">tintvillenigeria@gmail.com</strong>.
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Operates within Cloudflare D1's free tier: <strong>5,000,000 read rows/day</strong>, <strong>100,000 write rows/day</strong>, and <strong>5 GB database storage</strong>. Frontend hosted free on Cloudflare Pages.
                 </p>
-                <div className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Rules Deployed &amp; Active</span>
+                <div className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Configured in <code>wrangler.jsonc</code> &amp; <code>migrations/0001_initial.sql</code></span>
                 </div>
               </div>
 
+              {/* R2 Removed & Zero-Cost Image Strategy */}
               <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
-                <div className="flex items-center gap-2 text-[#008037] font-bold">
-                  <Cloud className="w-5 h-5" />
-                  <span>Cloudflare Workers + D1 + R2</span>
+                <div className="flex items-center gap-2 text-amber-600 font-bold">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Zero Paid Storage (Cloudflare R2 Removed)</span>
                 </div>
-                <p className="text-xs text-gray-600">
-                  Zero-dependency serverless edge deployment with <code>wrangler.jsonc</code> and <code>migrations/0001_initial.sql</code>.
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  All dependencies on Cloudflare R2, R2 buckets, and R2 credentials have been removed. Existing images are hosted on Google's high-speed Blogger CDN at zero cost.
                 </p>
-                <div className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Ready for <code>npx wrangler deploy</code></span>
+                <div className="text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-amber-600" />
+                  <span>No credit card or monthly subscription required</span>
+                </div>
+              </div>
+
+              {/* Firebase Admin Auth Card */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-2 text-blue-600 font-bold">
+                  <ShieldCheck className="w-5 h-5" />
+                  <span>Admin Authentication Gate</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Administrative dashboard access is strictly bound to <strong className="text-gray-900 font-semibold">{PRIMARY_ADMIN_EMAIL}</strong>. Write operations to the server-side API require valid authorization.
+                </p>
+                <div className="text-xs text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Server-side write protection active</span>
+                </div>
+              </div>
+
+              {/* Enabling Free Direct Uploads in Future */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-2 text-purple-600 font-bold">
+                  <Cloud className="w-5 h-5" />
+                  <span>How to Enable Free Direct Uploads Later</span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  To enable direct device file uploads without paid R2 storage, you can connect a free-compatible provider like <strong>Cloudinary Free Tier</strong> (25 GB free monthly bandwidth) with an unsigned upload preset, or free <strong>Imgur API</strong>. See <code>CLOUDFLARE_DEPLOYMENT.md</code> for setup instructions.
+                </p>
+                <div className="text-xs text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Documented in CLOUDFLARE_DEPLOYMENT.md</span>
                 </div>
               </div>
             </div>
@@ -1367,10 +1444,10 @@ export const AdminPage: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Candidate Live Preview Modal */}
+      {/* Pop-up Live Preview Modal */}
       {showCandidatePreview && (
         <CandidateCarouselModal
-          candidates={candidates.filter((c) => c.enabled)}
+          candidates={candidates.filter((c) => c.enabled).length > 0 ? candidates.filter((c) => c.enabled) : candidates}
           isOpen={showCandidatePreview}
           onClose={() => setShowCandidatePreview(false)}
           onNavigate={onNavigate}
