@@ -4,6 +4,7 @@ import {
   SiteSettings,
   CampaignPopup,
   APCCandidate,
+  SoundCloudTrack,
 } from '../types';
 import { store } from '../services/store';
 import { APC_LOGO_DATA_URL } from '../data/apcLogo';
@@ -32,6 +33,7 @@ import {
   Image as ImageIcon,
   Save,
   Play,
+  Pause,
   Calendar,
   ExternalLink,
   Sliders,
@@ -44,9 +46,16 @@ import {
   Fingerprint,
   X,
   Info,
+  Music,
+  Volume2,
+  VolumeX,
+  Disc3,
+  Radio,
+  ListMusic,
 } from 'lucide-react';
 import { CandidateCarouselModal } from '../components/CandidateCarouselModal';
 import { MPM_MEDIA_LIBRARY } from '../data/mediaLibrary';
+import { extractYouTubeId } from '../components/SoundCloudPlayer';
 
 interface Props {
   settings: SiteSettings;
@@ -73,8 +82,15 @@ export const AdminPage: React.FC<Props> = ({
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Tabs: 'events' | 'candidates' | 'settings' | 'campaigns' | 'cloudflare'
-  const [activeTab, setActiveTab] = useState<'events' | 'candidates' | 'settings' | 'campaigns' | 'cloudflare'>('candidates');
+  // Tabs: 'events' | 'candidates' | 'music' | 'settings' | 'campaigns' | 'cloudflare'
+  const [activeTab, setActiveTab] = useState<'events' | 'candidates' | 'music' | 'settings' | 'campaigns' | 'cloudflare'>('candidates');
+
+  // SoundCloud Songs & Audio state
+  const [soundCloudTracks, setSoundCloudTracks] = useState<SoundCloudTrack[]>(() => store.getSoundCloudTracks());
+  const [newTrackTitle, setNewTrackTitle] = useState('');
+  const [newTrackUrl, setNewTrackUrl] = useState('');
+  const [newTrackArtist, setNewTrackArtist] = useState('');
+  const [previewTrackUrl, setPreviewTrackUrl] = useState<string | null>(null);
 
   // Candidate editing state (5 APC Candidates)
   const [candidates, setCandidates] = useState<APCCandidate[]>(() => store.getCandidates(false));
@@ -296,7 +312,88 @@ export const AdminPage: React.FC<Props> = ({
     }
   };
 
-  // (Direct device file-to-base64 uploads removed to adhere to zero-base64 database storage and 100% Free Plan)
+  // --- Music & Audio Handlers (YouTube Music & SoundCloud) ---
+  const handleLoadOfficialYtMusic = () => {
+    const url = 'https://music.youtube.com/watch?v=5XYQY9bDUGY&si=Eljow2WFuiXzL_Fg';
+    const updated = {
+      ...settingsForm,
+      soundCloudUrl: url,
+      soundCloudEnabled: true,
+      soundCloudAutoplay: true,
+    };
+    setSettingsForm(updated);
+    store.updateSettings(updated);
+    onRefresh();
+    showBanner('Official APC Campaign Song (YouTube Music) loaded into background audio!');
+  };
+
+  const handleAddSoundCloudTrack = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTrackUrl.trim()) {
+      showBanner('Please provide a valid YouTube Music or SoundCloud URL.');
+      return;
+    }
+    const isYt = Boolean(extractYouTubeId(newTrackUrl.trim()));
+    const saved = store.saveSoundCloudTrack({
+      title: newTrackTitle.trim() || (isYt ? 'APC Campaign Song (YouTube Music)' : 'APC Campaign Track'),
+      url: newTrackUrl.trim(),
+      artist: newTrackArtist.trim() || 'All Progressives Congress',
+      source: isYt ? 'youtube' : 'soundcloud',
+      enabled: true,
+    });
+    setSoundCloudTracks(store.getSoundCloudTracks());
+    setNewTrackTitle('');
+    setNewTrackUrl('');
+    setNewTrackArtist('');
+    showBanner(`${isYt ? 'YouTube Music' : 'SoundCloud'} track "${saved.title}" added to library.`);
+  };
+
+  const handleDeleteSoundCloudTrack = (id: string, title: string) => {
+    if (window.confirm(`Remove "${title}" from the audio songs library?`)) {
+      store.deleteSoundCloudTrack(id);
+      setSoundCloudTracks(store.getSoundCloudTracks());
+      showBanner(`Track "${title}" removed.`);
+    }
+  };
+
+  const handleSetActiveSoundCloudSong = (url: string, title: string) => {
+    const updated = {
+      ...settingsForm,
+      soundCloudUrl: url,
+      soundCloudEnabled: true,
+    };
+    setSettingsForm(updated);
+    store.updateSettings({ soundCloudUrl: url, soundCloudEnabled: true });
+    onRefresh();
+    showBanner(`"${title}" is now set as the active background song!`);
+  };
+
+  const handleLoadOfficialAPCPlaylist = () => {
+    const url =
+      'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing';
+    const updated = {
+      ...settingsForm,
+      soundCloudUrl: url,
+      soundCloudEnabled: true,
+      soundCloudAutoplay: true,
+    };
+    setSettingsForm(updated);
+    store.updateSettings(updated);
+    onRefresh();
+    showBanner('Official APC Campaign Songs SoundCloud playlist loaded into background audio!');
+  };
+
+  const handleSaveMusicSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    store.updateSettings({
+      soundCloudUrl: settingsForm.soundCloudUrl,
+      soundCloudEnabled: settingsForm.soundCloudEnabled,
+      soundCloudAutoplay: settingsForm.soundCloudAutoplay,
+      soundCloudStartMuted: settingsForm.soundCloudStartMuted,
+    });
+    onRefresh();
+    showBanner('Background music settings saved successfully.');
+  };
 
   // --- Settings Handlers ---
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -562,6 +659,18 @@ export const AdminPage: React.FC<Props> = ({
           >
             <FileText className="w-4 h-4 inline mr-1.5" />
             Events &amp; News ({events.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('music')}
+            className={`py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              activeTab === 'music'
+                ? 'border-[#008037] text-[#008037]'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Music className="w-4 h-4 inline mr-1.5" />
+            Audio &amp; Music ({soundCloudTracks.length})
           </button>
 
           <button
@@ -1244,6 +1353,424 @@ export const AdminPage: React.FC<Props> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ================= TAB: BACKGROUND MUSIC (YOUTUBE MUSIC & SOUNDCLOUD) ================= */}
+        {activeTab === 'music' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Music className="w-5 h-5 text-[#008037]" />
+                  <span>Background Campaign Audio (YouTube Music &amp; SoundCloud)</span>
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Configure background campaign music with autoplay and an easy mute option. Supports YouTube Music, YouTube, and SoundCloud.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleLoadOfficialYtMusic}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <span>Load YouTube Music APC Song</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLoadOfficialAPCPlaylist}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#008037] border border-emerald-200 text-xs font-bold rounded-xl transition-all shadow-xs"
+                >
+                  <Disc3 className="w-4 h-4 text-[#008037]" />
+                  <span>Load SoundCloud Playlist</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Song & Playback Settings */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#008037] uppercase tracking-wider flex items-center gap-2">
+                    <Radio className="w-4 h-4" />
+                    <span>Currently Active Background Audio</span>
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    This song will play in the background across the site with autoplay and easy mute controls.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {extractYouTubeId(settingsForm.soundCloudUrl) ? (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+                      YouTube Music Active
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                      SoundCloud Active
+                    </span>
+                  )}
+                  <span
+                    className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      settingsForm.soundCloudEnabled
+                        ? 'bg-emerald-100 text-[#008037]'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {settingsForm.soundCloudEnabled ? '● Music Active' : '○ Music Disabled'}
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveMusicSettings} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Active Song URL (YouTube Music, YouTube, or SoundCloud) *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      required
+                      value={settingsForm.soundCloudUrl || ''}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, soundCloudUrl: e.target.value })
+                      }
+                      placeholder="https://music.youtube.com/watch?v=... or https://soundcloud.com/..."
+                      className="flex-1 px-4 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#008037]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTrackUrl(settingsForm.soundCloudUrl)}
+                      className="px-4 py-2.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition-colors flex items-center gap-1.5"
+                    >
+                      <Play className="w-3.5 h-3.5 text-[#008037]" />
+                      <span>Preview</span>
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Paste any YouTube Music link (e.g. <code>https://music.youtube.com/watch?v=5XYQY9bDUGY</code>) or SoundCloud URL.
+                  </p>
+                </div>
+
+                {/* Live Embedded Preview inside Admin */}
+                {settingsForm.soundCloudUrl && (
+                  <div className="p-4 bg-gray-900 rounded-2xl text-white space-y-3">
+                    {(() => {
+                      const activePreview = previewTrackUrl || settingsForm.soundCloudUrl;
+                      const previewYtId = extractYouTubeId(activePreview);
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold flex items-center gap-2 text-emerald-400">
+                              <Disc3 className="w-4 h-4" />
+                              <span>Live Admin Audio Verification ({previewYtId ? 'YouTube Music' : 'SoundCloud'})</span>
+                            </span>
+                            <a
+                              href={activePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-400 hover:text-white inline-flex items-center gap-1 text-[11px]"
+                            >
+                              <span>Open on {previewYtId ? 'YouTube Music' : 'SoundCloud'}</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+
+                          <div className="rounded-xl overflow-hidden bg-black/40 border border-white/10">
+                            {previewYtId ? (
+                              <iframe
+                                title="YouTube Music Admin Preview"
+                                width="100%"
+                                height="220"
+                                className="w-full"
+                                src={`https://www.youtube.com/embed/${previewYtId}?enablejsapi=1&autoplay=0&rel=0`}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <iframe
+                                title="SoundCloud Admin Preview"
+                                width="100%"
+                                height="166"
+                                scrolling="no"
+                                frameBorder="no"
+                                allow="autoplay"
+                                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(
+                                  activePreview
+                                )}&color=%23008037&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`}
+                              />
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Configuration Toggles */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.soundCloudEnabled ?? true}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, soundCloudEnabled: e.target.checked })
+                      }
+                      className="rounded text-[#008037] focus:ring-[#008037]"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block">
+                        Enable Background Music
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        Displays floating audio player and plays background campaign songs.
+                      </span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100/80 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.soundCloudAutoplay ?? true}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, soundCloudAutoplay: e.target.checked })
+                      }
+                      className="rounded text-[#008037] focus:ring-[#008037]"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block">
+                        Autoplay upon Page Load / First User Gesture
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        Automatically starts music seamlessly when visitors open the site.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 text-xs font-bold bg-[#008037] hover:bg-[#0a5d2c] text-white rounded-xl shadow-xs transition-colors flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save Background Audio Settings</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Add New Song to Library Form */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-[#008037]" />
+                    <span>Add New Song to Library (YouTube Music or SoundCloud)</span>
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Paste any YouTube Music link or SoundCloud track. You can easily switch between tracks to play on the live site.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewTrackTitle('APC Campaign Song (YouTube Music)');
+                      setNewTrackArtist('All Progressives Congress');
+                      setNewTrackUrl('https://music.youtube.com/watch?v=5XYQY9bDUGY&si=Eljow2WFuiXzL_Fg');
+                    }}
+                    className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-bold rounded-lg border border-red-200 transition-colors"
+                  >
+                    + Paste YouTube Music Track
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleAddSoundCloudTrack} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Song Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newTrackTitle}
+                      onChange={(e) => setNewTrackTitle(e.target.value)}
+                      placeholder="e.g. APC Campaign Song"
+                      className="w-full px-3.5 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Artist / Group (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newTrackArtist}
+                      onChange={(e) => setNewTrackArtist(e.target.value)}
+                      placeholder="e.g. All Progressives Congress"
+                      className="w-full px-3.5 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Song URL (YouTube Music, YouTube, or SoundCloud) *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={newTrackUrl}
+                    onChange={(e) => setNewTrackUrl(e.target.value)}
+                    placeholder="https://music.youtube.com/watch?v=... or https://soundcloud.com/..."
+                    className="w-full px-3.5 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 text-xs font-bold bg-[#008037] hover:bg-[#0a5d2c] text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Song to Library</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Configured Songs Library */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                    <ListMusic className="w-4 h-4 text-[#008037]" />
+                    <span>Configured Audio Tracks ({soundCloudTracks.length})</span>
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Click &quot;Set as Active Song&quot; to play any track immediately on the live website.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {soundCloudTracks.map((track) => {
+                  const isActive =
+                    settingsForm.soundCloudUrl?.trim().toLowerCase() ===
+                    track.url?.trim().toLowerCase();
+                  const isYt = Boolean(extractYouTubeId(track.url));
+
+                  return (
+                    <div
+                      key={track.id}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                        isActive
+                          ? 'bg-emerald-50/80 border-[#008037] ring-1 ring-[#008037]'
+                          : 'bg-gray-50/80 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            isActive
+                              ? 'bg-[#008037] text-white shadow-xs'
+                              : isYt
+                              ? 'bg-red-50 text-red-600 border border-red-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}
+                        >
+                          <Music className="w-5 h-5" />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-xs sm:text-sm font-bold text-gray-900">
+                              {track.title}
+                            </h4>
+                            <span
+                              className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                isYt
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {isYt ? 'YouTube Music' : 'SoundCloud'}
+                            </span>
+                            {isActive && (
+                              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#008037] text-white">
+                                Active on Site
+                              </span>
+                            )}
+                          </div>
+                          {track.artist && (
+                            <p className="text-xs text-gray-500 font-medium">{track.artist}</p>
+                          )}
+                          <p className="text-[11px] text-gray-400 font-mono truncate max-w-md mt-0.5">
+                            {track.url}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+                        <a
+                          href={track.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-xs text-gray-500 hover:text-gray-900 rounded-lg hover:bg-white transition-colors"
+                          title={isYt ? 'Open on YouTube Music' : 'Open on SoundCloud'}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => setPreviewTrackUrl(track.url)}
+                          className="px-3 py-1.5 text-xs font-semibold bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-xl transition-colors flex items-center gap-1.5"
+                          title="Preview Track"
+                        >
+                          <Play className="w-3.5 h-3.5 text-[#008037]" />
+                          <span>Preview</span>
+                        </button>
+
+                        {!isActive ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSetActiveSoundCloudSong(track.url, track.title)}
+                            className="px-3.5 py-1.5 text-xs font-bold bg-[#008037] hover:bg-[#0a5d2c] text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Set Active</span>
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 text-xs font-bold text-[#008037] bg-white border border-[#008037]/30 rounded-xl">
+                            ✓ Currently Playing
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSoundCloudTrack(track.id, track.title)}
+                          className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                          title="Delete track"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

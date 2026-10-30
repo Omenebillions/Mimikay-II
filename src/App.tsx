@@ -10,6 +10,7 @@ import { Footer } from './components/Footer';
 import { WhatsAppFloat } from './components/WhatsAppFloat';
 import { CampaignModal } from './components/CampaignModal';
 import { CandidateCarouselModal } from './components/CandidateCarouselModal';
+import { SoundCloudPlayer } from './components/SoundCloudPlayer';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -237,6 +238,15 @@ export default function App() {
           isOpen={isCandidateModalOpen}
           onClose={handleCloseCandidateModal}
           onNavigate={navigateTo}
+        />
+      )}
+
+      {/* Background SoundCloud Player with Easy Mute & Playlist Drawer */}
+      {isPublicPage && (
+        <SoundCloudPlayer
+          soundCloudUrl={settings.soundCloudUrl}
+          enabled={settings.soundCloudEnabled ?? true}
+          autoplay={settings.soundCloudAutoplay ?? true}
         />
       )}
 

@@ -21,7 +21,50 @@ export const SEED_SETTINGS: SiteSettings = {
   convenerTitle: 'The Convener',
   convenerImageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi9O_vAsT0SyOLFjj41ygsEQwNlI8KO9JYZj125DxPgg7NiikBxn-S7n15qN8UYjfsW9uB9GKyj6O60tZnkTTr0Y30-K8RsNBYdFXb5aW8eWxz0CZ41mDB3UrZ9-f_vx66vq6RLjIVqruB-1lfFhCPRrR5Hf6iAbGZ2VwYR4fkurvj26hT7e3TZHm8z1Ps/s1080/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%282%29.jpg',
   tintvilleUrl: 'https://wa.me/2349013506747',
+  soundCloudUrl: 'https://music.youtube.com/watch?v=5XYQY9bDUGY&si=Eljow2WFuiXzL_Fg',
+  soundCloudEnabled: true,
+  soundCloudAutoplay: true,
+  soundCloudStartMuted: false,
 };
+
+export const SEED_SOUNDCLOUD_TRACKS = [
+  {
+    id: 'yt-1',
+    title: 'APC Campaign Song (Official YouTube Music)',
+    artist: 'All Progressives Congress',
+    url: 'https://music.youtube.com/watch?v=5XYQY9bDUGY&si=Eljow2WFuiXzL_Fg',
+    source: 'youtube' as const,
+    enabled: true,
+    addedAt: '2026-03-02T00:00:00Z',
+  },
+  {
+    id: 'sc-1',
+    title: 'APC Campaign Songs (Official SoundCloud Playlist)',
+    artist: 'All Progressives Congress',
+    url: 'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing',
+    source: 'soundcloud' as const,
+    enabled: true,
+    addedAt: '2026-03-01T00:00:00Z',
+  },
+  {
+    id: 'sc-2',
+    title: 'Asiwaju Bola Ahmed Tinubu (Jagaban) Victory Anthem',
+    artist: 'APC National Grassroots Mobilization',
+    url: 'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs',
+    source: 'soundcloud' as const,
+    enabled: true,
+    addedAt: '2026-03-01T00:00:00Z',
+  },
+  {
+    id: 'sc-3',
+    title: 'Delta Central Unity & Grassroots Progress Anthem',
+    artist: 'Mimikay Political Movement Coalition',
+    url: 'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs',
+    source: 'soundcloud' as const,
+    enabled: true,
+    addedAt: '2026-03-01T00:00:00Z',
+  },
+];
 
 export const SEED_PILLARS: CorePillar[] = [
   {

@@ -1,11 +1,19 @@
-import { MPMEvent, SiteSettings, CampaignPopup, CorePillar, APCCandidate } from '../types';
-import { SEED_EVENTS, SEED_SETTINGS, SEED_CAMPAIGNS, SEED_PILLARS, SEED_CANDIDATES } from '../data/seedData';
+import { MPMEvent, SiteSettings, CampaignPopup, CorePillar, APCCandidate, SoundCloudTrack } from '../types';
+import {
+  SEED_EVENTS,
+  SEED_SETTINGS,
+  SEED_CAMPAIGNS,
+  SEED_PILLARS,
+  SEED_CANDIDATES,
+  SEED_SOUNDCLOUD_TRACKS,
+} from '../data/seedData';
 
 const STORAGE_KEYS = {
   EVENTS: 'mpm_events_data_v1',
   SETTINGS: 'mpm_settings_data_v1',
   CAMPAIGNS: 'mpm_campaigns_data_v1',
   CANDIDATES: 'mpm_candidates_data_v1',
+  SOUNDCLOUD_TRACKS: 'mpm_soundcloud_tracks_v1',
   DISMISSED_CAMPAIGNS: 'mpm_dismissed_campaigns_v1',
   ADMIN_AUTH: 'mpm_admin_authenticated_v1',
   ADMIN_EMAIL: 'mpm_admin_email_v1',
@@ -26,6 +34,7 @@ class StoreService {
   private settings: SiteSettings = SEED_SETTINGS;
   private campaigns: CampaignPopup[] = [];
   private candidates: APCCandidate[] = [];
+  private soundCloudTracks: SoundCloudTrack[] = [];
   private initialized = false;
 
   constructor() {
@@ -98,6 +107,31 @@ class StoreService {
         localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(this.candidates));
       }
 
+      // 5. Load Audio Tracks (YouTube Music & SoundCloud)
+      const savedTracks = localStorage.getItem(STORAGE_KEYS.SOUNDCLOUD_TRACKS);
+      if (savedTracks) {
+        const parsedTracks = JSON.parse(savedTracks) as SoundCloudTrack[];
+        const mergedTracks = [...parsedTracks];
+        for (const seed of SEED_SOUNDCLOUD_TRACKS) {
+          if (!mergedTracks.some(t => t.url === seed.url || t.id === seed.id)) {
+            mergedTracks.unshift(seed);
+          }
+        }
+        this.soundCloudTracks = mergedTracks;
+        localStorage.setItem(STORAGE_KEYS.SOUNDCLOUD_TRACKS, JSON.stringify(this.soundCloudTracks));
+      } else {
+        this.soundCloudTracks = [...SEED_SOUNDCLOUD_TRACKS];
+        localStorage.setItem(STORAGE_KEYS.SOUNDCLOUD_TRACKS, JSON.stringify(this.soundCloudTracks));
+      }
+
+      // Ensure soundCloudUrl is set to the default YouTube Music APC song
+      if (!this.settings.soundCloudUrl || this.settings.soundCloudUrl.includes('all-progressives-congress-apc-campaign-songs')) {
+        this.settings.soundCloudUrl = SEED_SETTINGS.soundCloudUrl;
+        this.settings.soundCloudEnabled = true;
+        this.settings.soundCloudAutoplay = true;
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
+      }
+
       this.initialized = true;
 
       // Asynchronously sync with Cloudflare D1 server-side API if available
@@ -108,6 +142,7 @@ class StoreService {
       this.events = [...SEED_EVENTS];
       this.campaigns = [...SEED_CAMPAIGNS];
       this.candidates = [...SEED_CANDIDATES];
+      this.soundCloudTracks = [...SEED_SOUNDCLOUD_TRACKS];
     }
   }
 
@@ -127,6 +162,8 @@ class StoreService {
             announcementText: serverSettings.announcement_text || this.settings.announcementText,
             blogUrl: serverSettings.blog_url || this.settings.blogUrl,
             whatsappGroupUrl: serverSettings.whatsapp_group_url || this.settings.whatsappGroupUrl,
+            soundCloudUrl: serverSettings.soundcloud_url || this.settings.soundCloudUrl,
+            soundCloudEnabled: serverSettings.soundcloud_enabled !== undefined ? Boolean(serverSettings.soundcloud_enabled) : this.settings.soundCloudEnabled,
           };
           window.dispatchEvent(new CustomEvent('mpm-settings-updated', { detail: this.settings }));
         }
@@ -490,22 +527,89 @@ class StoreService {
     return false;
   }
 
+  // --- SOUNDCLOUD TRACKS MANAGEMENT ---
+  public getSoundCloudTracks(): SoundCloudTrack[] {
+    if (!this.initialized) this.init();
+    return [...this.soundCloudTracks];
+  }
+
+  public saveSoundCloudTrack(
+    track: Omit<SoundCloudTrack, 'id'> & { id?: string }
+  ): SoundCloudTrack {
+    if (!this.initialized) this.init();
+    let saved: SoundCloudTrack;
+    if (track.id) {
+      this.soundCloudTracks = this.soundCloudTracks.map((t) =>
+        t.id === track.id ? { ...t, ...track, id: track.id! } : t
+      );
+      saved = this.soundCloudTracks.find((t) => t.id === track.id)!;
+    } else {
+      saved = {
+        ...track,
+        id: `sc-${Date.now()}`,
+        addedAt: new Date().toISOString(),
+        enabled: track.enabled ?? true,
+      };
+      this.soundCloudTracks.unshift(saved);
+    }
+    try {
+      localStorage.setItem(
+        STORAGE_KEYS.SOUNDCLOUD_TRACKS,
+        JSON.stringify(this.soundCloudTracks)
+      );
+      window.dispatchEvent(
+        new CustomEvent('mpm-soundcloud-updated', { detail: this.soundCloudTracks })
+      );
+    } catch (err) {
+      console.error('Failed to save soundcloud track:', err);
+    }
+    return saved;
+  }
+
+  public deleteSoundCloudTrack(id: string): boolean {
+    if (!this.initialized) this.init();
+    const initialLen = this.soundCloudTracks.length;
+    this.soundCloudTracks = this.soundCloudTracks.filter((t) => t.id !== id);
+    if (this.soundCloudTracks.length !== initialLen) {
+      try {
+        localStorage.setItem(
+          STORAGE_KEYS.SOUNDCLOUD_TRACKS,
+          JSON.stringify(this.soundCloudTracks)
+        );
+        window.dispatchEvent(
+          new CustomEvent('mpm-soundcloud-updated', { detail: this.soundCloudTracks })
+        );
+        return true;
+      } catch (err) {
+        console.error('Failed to delete soundcloud track:', err);
+      }
+    }
+    return false;
+  }
+
+  public setActiveSoundCloudUrl(url: string): void {
+    this.updateSettings({ soundCloudUrl: url, soundCloudEnabled: true });
+  }
+
   // --- SEED RESET ---
   public resetToOriginalSeed(): void {
     this.settings = { ...SEED_SETTINGS };
     this.events = [...SEED_EVENTS];
     this.campaigns = [...SEED_CAMPAIGNS];
     this.candidates = [...SEED_CANDIDATES];
+    this.soundCloudTracks = [...SEED_SOUNDCLOUD_TRACKS];
     try {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
       localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events));
       localStorage.setItem(STORAGE_KEYS.CAMPAIGNS, JSON.stringify(this.campaigns));
       localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(this.candidates));
+      localStorage.setItem(STORAGE_KEYS.SOUNDCLOUD_TRACKS, JSON.stringify(this.soundCloudTracks));
       localStorage.removeItem(STORAGE_KEYS.DISMISSED_CAMPAIGNS);
       window.dispatchEvent(new CustomEvent('mpm-settings-updated', { detail: this.settings }));
       window.dispatchEvent(new CustomEvent('mpm-events-updated', { detail: this.events }));
       window.dispatchEvent(new CustomEvent('mpm-campaigns-updated', { detail: this.campaigns }));
       window.dispatchEvent(new CustomEvent('mpm-candidates-updated', { detail: this.candidates }));
+      window.dispatchEvent(new CustomEvent('mpm-soundcloud-updated', { detail: this.soundCloudTracks }));
     } catch (err) {
       console.error('Failed to reset store:', err);
     }

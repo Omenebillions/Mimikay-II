@@ -36,6 +36,22 @@ export interface SiteSettings {
   convenerTitle: string;
   convenerImageUrl: string;
   tintvilleUrl: string;
+  // Background SoundCloud Music
+  soundCloudUrl: string;
+  soundCloudEnabled: boolean;
+  soundCloudAutoplay: boolean;
+  soundCloudStartMuted: boolean;
+  soundCloudTracks?: SoundCloudTrack[];
+}
+
+export interface SoundCloudTrack {
+  id: string;
+  title: string;
+  url: string;
+  artist?: string;
+  source?: 'youtube' | 'soundcloud';
+  enabled?: boolean;
+  addedAt?: string;
 }
 
 export interface CampaignPopup {

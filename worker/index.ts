@@ -43,6 +43,9 @@ const FALLBACK_SETTINGS = {
   convener_title: 'The Convener',
   convener_image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi9O_vAsT0SyOLFjj41ygsEQwNlI8KO9JYZj125DxPgg7NiikBxn-S7n15qN8UYjfsW9uB9GKyj6O60tZnkTTr0Y30-K8RsNBYdFXb5aW8eWxz0CZ41mDB3UrZ9-f_vx66vq6RLjIVqruB-1lfFhCPRrR5Hf6iAbGZ2VwYR4fkurvj26hT7e3TZHm8z1Ps/s1080/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%282%29.jpg',
   tintville_url: 'https://wa.me/2349013506747',
+  soundcloud_url: 'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing',
+  soundcloud_enabled: 1,
+  soundcloud_autoplay: 1,
 };
 
 const FALLBACK_EVENTS = [
@@ -206,9 +209,17 @@ async function ensureDatabaseSchema(db: D1Database): Promise<void> {
         convener_title TEXT DEFAULT 'The Convener',
         convener_image_url TEXT,
         tintville_url TEXT DEFAULT 'https://wa.me/2349013506747',
+        soundcloud_url TEXT DEFAULT 'https://soundcloud.com/wow-you-xp/sets/all-progressives-congress-apc-campaign-songs?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing',
+        soundcloud_enabled INTEGER DEFAULT 1,
+        soundcloud_autoplay INTEGER DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `).run().catch(() => null);
+
+    // Non-breaking column migrations for existing instances
+    await db.prepare('ALTER TABLE site_settings ADD COLUMN soundcloud_url TEXT').run().catch(() => null);
+    await db.prepare('ALTER TABLE site_settings ADD COLUMN soundcloud_enabled INTEGER DEFAULT 1').run().catch(() => null);
+    await db.prepare('ALTER TABLE site_settings ADD COLUMN soundcloud_autoplay INTEGER DEFAULT 1').run().catch(() => null);
 
     // 2. Events Table
     await db.prepare(`
@@ -400,7 +411,8 @@ export default {
             hero_headline = ?, hero_subtitle = ?, hero_button_primary_text = ?, hero_button_primary_link = ?,
             hero_button_secondary_text = ?, hero_button_secondary_link = ?, announcement_enabled = ?,
             announcement_text = ?, blog_url = ?, whatsapp_group_url = ?, contact_email = ?,
-            phone_1 = ?, phone_2 = ?, phone_3 = ?, updated_at = CURRENT_TIMESTAMP
+            phone_1 = ?, phone_2 = ?, phone_3 = ?, soundcloud_url = ?, soundcloud_enabled = ?,
+            updated_at = CURRENT_TIMESTAMP
            WHERE id = 'current'`
         )
           .bind(
@@ -417,7 +429,9 @@ export default {
             body.contactEmail || body.contact_email || FALLBACK_SETTINGS.contact_email,
             body.phone1 || body.phone_1 || FALLBACK_SETTINGS.phone_1,
             body.phone2 || body.phone_2 || FALLBACK_SETTINGS.phone_2,
-            body.phone3 || body.phone_3 || FALLBACK_SETTINGS.phone_3
+            body.phone3 || body.phone_3 || FALLBACK_SETTINGS.phone_3,
+            body.soundCloudUrl || body.soundcloud_url || FALLBACK_SETTINGS.soundcloud_url,
+            body.soundCloudEnabled !== undefined ? (body.soundCloudEnabled ? 1 : 0) : 1
           )
           .run();
         return jsonResponse({ success: true, message: 'Settings saved to D1' });
