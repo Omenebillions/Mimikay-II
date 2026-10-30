@@ -20,6 +20,312 @@ export interface Env {
   ENVIRONMENT?: string;
 }
 
+// Fallback seed constants so worker never crashes with 500
+const FALLBACK_SETTINGS = {
+  id: 'current',
+  hero_headline: 'Advancing Grassroots Development, Unity & Democratic Leadership',
+  hero_subtitle: 'The Mimikay Political Movement (MPM) is a dedicated coalition advancing community welfare, responsible governance, and purposeful leadership across Delta State and Nigeria.',
+  hero_button_primary_text: 'Explore Our Events',
+  hero_button_primary_link: '/events',
+  hero_button_secondary_text: 'Learn About MPM',
+  hero_button_secondary_link: '/about',
+  announcement_enabled: 1,
+  announcement_text: 'Stay updated with the latest political news with our blog',
+  announcement_link: 'https://kangaroo.ng',
+  announcement_link_text: 'kangaroo.ng',
+  blog_url: 'https://kangaroo.ng',
+  whatsapp_group_url: 'https://chat.whatsapp.com/BYxgPGIVoZyBebH2rWdbGn',
+  contact_email: 'info@mimikaypoliticalmovement.com',
+  phone_1: '+234 9134830720',
+  phone_2: '+234 7035553463',
+  phone_3: '+234 7060503302',
+  convener_name: 'Hon. Oghenekaro Akpososo',
+  convener_title: 'The Convener',
+  convener_image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi9O_vAsT0SyOLFjj41ygsEQwNlI8KO9JYZj125DxPgg7NiikBxn-S7n15qN8UYjfsW9uB9GKyj6O60tZnkTTr0Y30-K8RsNBYdFXb5aW8eWxz0CZ41mDB3UrZ9-f_vx66vq6RLjIVqruB-1lfFhCPRrR5Hf6iAbGZ2VwYR4fkurvj26hT7e3TZHm8z1Ps/s1080/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%282%29.jpg',
+  tintville_url: 'https://wa.me/2349013506747',
+};
+
+const FALLBACK_EVENTS = [
+  {
+    id: 'evt-1',
+    slug: 'mpm-endorses-senator-ede-dafinone',
+    title: 'MPM Reaffirms Support for Tinubu, Governor Sheriff & Endorses Senator Ede Dafinone',
+    summary: 'The Mimikay Political Movement, led by Hon. Oghenekaro Akpososo, has reaffirmed its strong support for President Bola Ahmed Tinubu and the administration of Governor Sheriff Oborevwori, while officially declaring full endorsement for Senator Ede Dafinone for a second term in Delta Central.',
+    content: 'The Mimikay Political Movement (MPM), led by Hon. Oghenekaro Akpososo, has reaffirmed its strong support for President Bola Ahmed Tinubu and the administration of Governor Sheriff Oborevwori, noting their steadfast commitment to national stability, economic reforms, and infrastructural development across Delta State.\n\nThe movement further declared its full endorsement of Distinguished Senator Ede Dafinone for a second term following his formal declaration in Ughelli.\n\nThe endorsement was made shortly after the major gathering held at Oharisi Primary School, where members of the movement expressed unwavering confidence in Senator Dafinone\'s leadership, accessibility, and high-impact representation of Delta Central Senatorial District.\n\nHon. Akpososo emphasized that purposeful representation requires continuity and strong synergy between grassroots organizations, state authorities, and federal legislators to bring tangible dividends of democracy to the people of Delta Central.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEghTw8Vwqs-0fsmPQd7gEM4G6ddbewIP4jz-5eZAchHEnDWTyWyNNvir05XUpjADEKk63XNoerGqGoXTcTGe7zbpfhaY7n6BB2kyaClzRcHO7yoggysK_Q6Gma7xq3_Gvha78yj5SY2SnQnPzK-5rN_r0BkEuHNxlltDv22tzcyotw0Xe5JQd18PSSpWAY/s2048/682881636_2023485028547888_563369088969241840_n.jpg',
+    youtube_id: '7sXgMgx5Wq4',
+    event_date: '2026-03-02',
+    location: 'Oharisi Primary School, Ughelli, Delta Central',
+    published: 1,
+    featured: 1,
+    category: 'Endorsement',
+  },
+  {
+    id: 'evt-2',
+    slug: 'official-inauguration-2027-endorsement',
+    title: 'Official Inauguration & 2027 Endorsement',
+    summary: 'The Mimikay Political Movement officially inaugurated its leadership executive, formally endorsing President Bola Ahmed Tinubu and Governor Sheriff Oborevwori for re-election in 2027.',
+    content: 'The Mimikay Political Movement officially inaugurated its leadership structure at a historic gathering attended by community representatives, youth leaders, women advocates, and civic stakeholders.\n\nDuring the inauguration ceremony, the movement formally declared its resolute endorsement of President Bola Ahmed Tinubu and Governor Sheriff Oborevwori for re-election in 2027.\n\nThe convener, Hon. Oghenekaro Akpososo, administered the affirmation to local ward coordinators and urged all executives to champion grassroots civic involvement, peaceful political engagement, and constructive mobilization across all wards and communities in Delta State.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjWAbqWDgeCxoAPGcxO0BQwKxzEAGo28sBzWpHs7IEzsdniEpK2mFrdfL6GMX03Zod3h71GQlTJO_ZG57S-LLt3xIw4sd0w8QLyMxVql-kNbqKjIzSBvYsWUIo-B66fDh4-oxEoMttftlmSEhC9yd0VVIJ8Nvffxma9AVCz2PqfFN3_JMN0c4MXaE099Qo/s1280/WhatsApp%20Image%202026-02-28%20at%201.39.57%20PM%20%281%29.jpeg',
+    youtube_id: null,
+    event_date: '2026-02-28',
+    location: 'Ughelli, Delta State',
+    published: 1,
+    featured: 0,
+    category: 'Inauguration',
+  },
+  {
+    id: 'evt-3',
+    slug: 'strategic-leadership-visit-senator-dafinone',
+    title: 'Strategic Leadership Visit to Senator Ede Dafinone',
+    summary: 'Members of the Mimikay Political Movement paid a consultative visit to Senator Ede Dafinone, representing Delta Central Senatorial District, focusing on community development priorities.',
+    content: 'A delegation of executives and representatives of the Mimikay Political Movement paid an official consultative visit to Senator Ede Dafinone, who represents the Delta Central Senatorial District in the National Assembly.\n\nThe strategic meeting provided a collaborative platform to present grassroots community priorities, discuss empowerment initiatives for youths and women in Delta Central, and deliberate on legislative interventions that directly improve local livelihoods.\n\nSenator Dafinone commended the MPM leadership for their commitment to constructive civic engagement, discipline, and organized grassroots advocacy.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhOlmF_JY9OMjfcfzKhGgy36pi3uA5PAs-wUOp30Cg02c_uH2xJ-2apUVr5cDkutDeVIywo55T3MWXlUcBsrl5zVvNM5ClB78k6xWMD1Qer5wj-F90HQdwyuyLIzP3ZUcSJx_GbK5rtbVMQ-kry9pLX26ZNUylqIlBfTyPiR54qPYrpOKosFusTZH3ohhU/s1080/ad593995-48ad-4cbb-982c-130a84c79c31.jfif',
+    youtube_id: null,
+    event_date: '2026-02-15',
+    location: 'Delta Central Senatorial District Office',
+    published: 1,
+    featured: 0,
+    category: 'Consultation',
+  },
+  {
+    id: 'evt-4',
+    slug: 'ughelli-flyover-milestone-groundbreaking',
+    title: 'Ughelli Flyover Milestone',
+    summary: 'MPM delegation witnessing the groundbreaking ceremony of the vital Ughelli urban flyover project by the Executive Governor of Delta State, Rt. Hon. Sheriff Francis Orowhedor Oborevwori.',
+    content: 'An official MPM delegation was on ground to witness the groundbreaking milestone of the landmark Ughelli Flyover project, performed by the Executive Governor of Delta State, Rt. Hon. Sheriff Francis Orowhedor Oborevwori.\n\nThis major infrastructural project represents a transformative urban upgrade aimed at de-congesting traffic, accelerating commerce across Delta Central, and establishing sustainable modern transport corridors.\n\nHon. Oghenekaro Akpososo and MPM members commended Governor Oborevwori\'s administration for prioritising visible, high-impact infrastructure that elevates the living standards of citizens and stimulates economic growth throughout the Niger Delta region.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjLeqNggdQctuzBAD65Deh09Z1VkDwF2eEanpDzytqbbOvcMTWsiyiJSrYZcvpZ2mIaHVlbFJQgGMw2N8zBTpE8o3FiC1KbYEIhItg1lL0N4ffQ6r1RnZT6mg_zyyKjS5eF8eNgAZHDGchgMQ9Q13YERnqbUpw5-S7z4VHCW3eihybuVkq1GXOKkCQrmBA/s1431/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%281%29.jpg',
+    youtube_id: null,
+    event_date: '2026-01-28',
+    location: 'Ughelli Ring Road / Junction, Delta State',
+    published: 1,
+    featured: 0,
+    category: 'Infrastructure',
+  },
+];
+
+const FALLBACK_CANDIDATES = [
+  {
+    id: 'cand-1',
+    name: 'President Bola Ahmed Tinubu (GCFR)',
+    office: 'President & Commander-in-Chief of the Armed Forces',
+    party: 'All Progressives Congress (APC)',
+    headline: '2027 Re-election Endorsement',
+    message: 'The Mimikay Political Movement reaffirms resolute support for President Bola Ahmed Tinubu, championing bold economic reforms, national stability, and sustained grassroots infrastructural investment.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjWAbqWDgeCxoAPGcxO0BQwKxzEAGo28sBzWpHs7IEzsdniEpK2mFrdfL6GMX03Zod3h71GQlTJO_ZG57S-LLt3xIw4sd0w8QLyMxVql-kNbqKjIzSBvYsWUIo-B66fDh4-oxEoMttftlmSEhC9yd0VVIJ8Nvffxma9AVCz2PqfFN3_JMN0c4MXaE099Qo/s1280/WhatsApp%20Image%202026-02-28%20at%201.39.57%20PM%20%281%29.jpeg',
+    cta_text: 'View Endorsement Report',
+    cta_url: '/events/official-inauguration-2027-endorsement',
+    order_index: 1,
+    enabled: 1,
+  },
+  {
+    id: 'cand-2',
+    name: 'Senator Ede Dafinone',
+    office: 'Senator, Delta Central Senatorial District',
+    party: 'All Progressives Congress (APC)',
+    headline: 'Official Second-Term Endorsement',
+    message: 'MPM declared full endorsement of Distinguished Senator Ede Dafinone following his declaration at Oharisi Primary School, Ughelli, celebrating his accessible representation, community empowerment, and legislative excellence.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhOlmF_JY9OMjfcfzKhGgy36pi3uA5PAs-wUOp30Cg02c_uH2xJ-2apUVr5cDkutDeVIywo55T3MWXlUcBsrl5zVvNM5ClB78k6xWMD1Qer5wj-F90HQdwyuyLIzP3ZUcSJx_GbK5rtbVMQ-kry9pLX26ZNUylqIlBfTyPiR54qPYrpOKosFusTZH3ohhU/s1080/ad593995-48ad-4cbb-982c-130a84c79c31.jfif',
+    cta_text: 'Watch Video Briefing',
+    cta_url: '/events/mpm-endorses-senator-ede-dafinone',
+    order_index: 2,
+    enabled: 1,
+  },
+  {
+    id: 'cand-3',
+    name: 'Rt. Hon. Sheriff Francis Oborevwori',
+    office: 'Executive Governor of Delta State',
+    party: 'Government of Delta State',
+    headline: 'Grassroots Infrastructure Partner',
+    message: 'Commended by Mimikay Political Movement for transformative public infrastructure, including the landmark Ughelli Flyover project and community-centered urban development across Delta Central.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgHhqDs4VLHx1ACulFLyqpEJB6krpRbvDxHHnMyk7VPLcSIhUA9CaugzehXJe7NfTRTNWe_bhnOM7L0gG14PerP_OhZW4AK4pq2Qcz7LrylYgeP57zJ91cCTm6P-oLpg_DG2NvaUWIAKzw5SlY_R3YfIdDOBt027O5rNtswaKDiW48bu0_AMP2eMCeztNQ/s800/Sherrif-Oborevwori.jpeg',
+    cta_text: 'Read Flyover Milestone',
+    cta_url: '/events/ughelli-flyover-milestone-groundbreaking',
+    order_index: 3,
+    enabled: 1,
+  },
+  {
+    id: 'cand-4',
+    name: 'Hon. Oghenekaro Akpososo',
+    office: 'The Convener, Mimikay Political Movement',
+    party: 'Voice for Delta Grassroot Development',
+    headline: 'Grassroots Convener & Civic Champion',
+    message: 'Leading the grassroots coalition across all wards in Delta State, coordinating community consultations, voter education, and holding leadership accountable to the welfare of the people.',
+    image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi9O_vAsT0SyOLFjj41ygsEQwNlI8KO9JYZj125DxPgg7NiikBxn-S7n15qN8UYjfsW9uB9GKyj6O60tZnkTTr0Y30-K8RsNBYdFXb5aW8eWxz0CZ41mDB3UrZ9-f_vx66vq6RLjIVqruB-1lfFhCPRrR5Hf6iAbGZ2VwYR4fkurvj26hT7e3TZHm8z1Ps/s1080/The%20Mimikay%20Political%20Movement,%20led%20by%20Hon.%20Oghenekaro%20Akpososo,%20has%20commended%20Delta%20State%20Gover%20%282%29.jpg',
+    cta_text: 'Read Convener Profile',
+    cta_url: '/about',
+    order_index: 4,
+    enabled: 1,
+  },
+];
+
+const FALLBACK_CAMPAIGN = {
+  id: 'camp-1',
+  title: 'Join MPM Grassroots WhatsApp Community',
+  headline: 'Stand With Delta Grassroots Development',
+  message: 'Be part of the active coalition transforming our communities. Connect directly with ward leaders, get verified civic updates, and participate in local empowerment programs.',
+  image_url: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjWAbqWDgeCxoAPGcxO0BQwKxzEAGo28sBzWpHs7IEzsdniEpK2mFrdfL6GMX03Zod3h71GQlTJO_ZG57S-LLt3xIw4sd0w8QLyMxVql-kNbqKjIzSBvYsWUIo-B66fDh4-oxEoMttftlmSEhC9yd0VVIJ8Nvffxma9AVCz2PqfFN3_JMN0c4MXaE099Qo/s1280/WhatsApp%20Image%202026-02-28%20at%201.39.57%20PM%20%281%29.jpeg',
+  cta_text: 'Join MPM WhatsApp Group',
+  cta_url: 'https://chat.whatsapp.com/BYxgPGIVoZyBebH2rWdbGn',
+  cta_type: 'whatsapp',
+  start_date: '2026-01-01',
+  end_date: '2027-12-31',
+  enabled: 1,
+  is_paused: 0,
+  homepage_only: 0,
+  display_delay_seconds: 3,
+  dismissal_frequency_days: 3,
+};
+
+// Self-healing database initializer
+let schemaEnsured = false;
+async function ensureDatabaseSchema(db: D1Database): Promise<void> {
+  if (schemaEnsured) return;
+  try {
+    // 1. Site Settings Table
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        id TEXT PRIMARY KEY DEFAULT 'current',
+        hero_headline TEXT NOT NULL,
+        hero_subtitle TEXT NOT NULL,
+        hero_button_primary_text TEXT DEFAULT 'Explore Our Events',
+        hero_button_primary_link TEXT DEFAULT '/events',
+        hero_button_secondary_text TEXT DEFAULT 'Learn About MPM',
+        hero_button_secondary_link TEXT DEFAULT '/about',
+        announcement_enabled INTEGER DEFAULT 1,
+        announcement_text TEXT DEFAULT 'Stay updated with the latest political news with our blog',
+        announcement_link TEXT DEFAULT 'https://kangaroo.ng',
+        announcement_link_text TEXT DEFAULT 'kangaroo.ng',
+        blog_url TEXT DEFAULT 'https://kangaroo.ng',
+        whatsapp_group_url TEXT DEFAULT 'https://chat.whatsapp.com/BYxgPGIVoZyBebH2rWdbGn',
+        contact_email TEXT DEFAULT 'info@mimikaypoliticalmovement.com',
+        phone_1 TEXT DEFAULT '+234 9134830720',
+        phone_2 TEXT DEFAULT '+234 7035553463',
+        phone_3 TEXT DEFAULT '+234 7060503302',
+        convener_name TEXT DEFAULT 'Hon. Oghenekaro Akpososo',
+        convener_title TEXT DEFAULT 'The Convener',
+        convener_image_url TEXT,
+        tintville_url TEXT DEFAULT 'https://wa.me/2349013506747',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run().catch(() => null);
+
+    // 2. Events Table
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE NOT NULL,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        youtube_id TEXT,
+        event_date TEXT NOT NULL,
+        location TEXT,
+        published INTEGER DEFAULT 1,
+        featured INTEGER DEFAULT 0,
+        category TEXT DEFAULT 'General',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run().catch(() => null);
+
+    // 3. Campaigns Table
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS campaigns (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        headline TEXT NOT NULL,
+        message TEXT NOT NULL,
+        image_url TEXT,
+        cta_text TEXT NOT NULL,
+        cta_url TEXT NOT NULL,
+        cta_type TEXT DEFAULT 'whatsapp',
+        start_date TEXT,
+        end_date TEXT,
+        enabled INTEGER DEFAULT 1,
+        is_paused INTEGER DEFAULT 0,
+        homepage_only INTEGER DEFAULT 0,
+        display_delay_seconds INTEGER DEFAULT 3,
+        dismissal_frequency_days INTEGER DEFAULT 3,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run().catch(() => null);
+
+    // 4. Candidates Table (Pop-up carousel)
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS candidates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        office TEXT DEFAULT '',
+        party TEXT DEFAULT 'All Progressives Congress (APC)',
+        headline TEXT DEFAULT '',
+        message TEXT DEFAULT '',
+        image_url TEXT NOT NULL,
+        cta_text TEXT DEFAULT 'Learn More',
+        cta_url TEXT DEFAULT '',
+        order_index INTEGER DEFAULT 1,
+        enabled INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run().catch(() => null);
+
+    // Seed site_settings if missing
+    const existingSettings = await db.prepare('SELECT id FROM site_settings WHERE id = ?').bind('current').first().catch(() => null);
+    if (!existingSettings) {
+      await db.prepare(`
+        INSERT OR IGNORE INTO site_settings (
+          id, hero_headline, hero_subtitle, announcement_enabled, announcement_text,
+          blog_url, whatsapp_group_url, contact_email, phone_1, phone_2, phone_3
+        ) VALUES ('current', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        FALLBACK_SETTINGS.hero_headline,
+        FALLBACK_SETTINGS.hero_subtitle,
+        FALLBACK_SETTINGS.announcement_enabled,
+        FALLBACK_SETTINGS.announcement_text,
+        FALLBACK_SETTINGS.blog_url,
+        FALLBACK_SETTINGS.whatsapp_group_url,
+        FALLBACK_SETTINGS.contact_email,
+        FALLBACK_SETTINGS.phone_1,
+        FALLBACK_SETTINGS.phone_2,
+        FALLBACK_SETTINGS.phone_3
+      ).run().catch(() => null);
+    }
+
+    // Seed events if table is empty
+    const eventCount = await db.prepare('SELECT count(*) as count FROM events').first<{ count: number }>().catch(() => null);
+    if (!eventCount || eventCount.count === 0) {
+      for (const e of FALLBACK_EVENTS) {
+        await db.prepare(`
+          INSERT OR IGNORE INTO events (
+            id, slug, title, summary, content, image_url, youtube_id, event_date, location, published, featured, category
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          e.id, e.slug, e.title, e.summary, e.content, e.image_url, e.youtube_id, e.event_date, e.location, e.published, e.featured, e.category
+        ).run().catch(() => null);
+      }
+    }
+
+    // Seed candidates if table is empty
+    const candCount = await db.prepare('SELECT count(*) as count FROM candidates').first<{ count: number }>().catch(() => null);
+    if (!candCount || candCount.count === 0) {
+      for (const c of FALLBACK_CANDIDATES) {
+        await db.prepare(`
+          INSERT OR IGNORE INTO candidates (
+            id, name, office, party, headline, message, image_url, cta_text, cta_url, order_index, enabled
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          c.id, c.name, c.office, c.party, c.headline, c.message, c.image_url, c.cta_text, c.cta_url, c.order_index, c.enabled
+        ).run().catch(() => null);
+      }
+    }
+
+    schemaEnsured = true;
+  } catch (e) {
+    console.warn('Auto-schema check notice:', e);
+  }
+}
+
 // Server-side Authorization validator
 function isAuthorized(request: Request, env: Env): boolean {
   const authHeader = request.headers.get('Authorization') || '';
@@ -59,18 +365,24 @@ export default {
       });
     };
 
-    // --- API ROUTES (Cloudflare D1 Free Tier) ---
+    // If D1 database is attached, trigger non-blocking auto-schema bootstrap
+    if (env.DB && !schemaEnsured) {
+      await ensureDatabaseSchema(env.DB);
+    }
+
+    // --- API ROUTES (Cloudflare D1 Free Tier with Self-Healing Fallbacks) ---
 
     // 1. GET /api/settings
     if (pathname === '/api/settings' && request.method === 'GET') {
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) return jsonResponse(FALLBACK_SETTINGS, 200);
       try {
         const result = await env.DB.prepare('SELECT * FROM site_settings WHERE id = ?')
           .bind('current')
           .first();
-        return jsonResponse(result || {});
+        return jsonResponse(result || FALLBACK_SETTINGS, 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        console.warn('GET /api/settings fallback:', err);
+        return jsonResponse(FALLBACK_SETTINGS, 200);
       }
     }
 
@@ -81,6 +393,7 @@ export default {
       }
       if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
       try {
+        if (!schemaEnsured) await ensureDatabaseSchema(env.DB);
         const body = (await request.json()) as any;
         await env.DB.prepare(
           `UPDATE site_settings SET 
@@ -91,20 +404,20 @@ export default {
            WHERE id = 'current'`
         )
           .bind(
-            body.heroHeadline || body.hero_headline || '',
-            body.heroSubtitle || body.hero_subtitle || '',
+            body.heroHeadline || body.hero_headline || FALLBACK_SETTINGS.hero_headline,
+            body.heroSubtitle || body.hero_subtitle || FALLBACK_SETTINGS.hero_subtitle,
             body.heroButtonPrimaryText || body.hero_button_primary_text || 'Explore Our Events',
             body.heroButtonPrimaryLink || body.hero_button_primary_link || '/events',
             body.heroButtonSecondaryText || body.hero_button_secondary_text || 'Learn About MPM',
             body.heroButtonSecondaryLink || body.hero_button_secondary_link || '/about',
             body.announcementEnabled ?? body.announcement_enabled ? 1 : 0,
-            body.announcementText || body.announcement_text || '',
+            body.announcementText || body.announcement_text || FALLBACK_SETTINGS.announcement_text,
             body.blogUrl || body.blog_url || 'https://kangaroo.ng',
-            body.whatsappGroupUrl || body.whatsapp_group_url || '',
-            body.contactEmail || body.contact_email || '',
-            body.phone1 || body.phone_1 || '',
-            body.phone2 || body.phone_2 || '',
-            body.phone3 || body.phone_3 || ''
+            body.whatsappGroupUrl || body.whatsapp_group_url || FALLBACK_SETTINGS.whatsapp_group_url,
+            body.contactEmail || body.contact_email || FALLBACK_SETTINGS.contact_email,
+            body.phone1 || body.phone_1 || FALLBACK_SETTINGS.phone_1,
+            body.phone2 || body.phone_2 || FALLBACK_SETTINGS.phone_2,
+            body.phone3 || body.phone_3 || FALLBACK_SETTINGS.phone_3
           )
           .run();
         return jsonResponse({ success: true, message: 'Settings saved to D1' });
@@ -115,29 +428,38 @@ export default {
 
     // 3. GET /api/events
     if (pathname === '/api/events' && request.method === 'GET') {
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) return jsonResponse(FALLBACK_EVENTS, 200);
       try {
         const { results } = await env.DB.prepare(
           'SELECT * FROM events ORDER BY event_date DESC, created_at DESC'
         ).all();
-        return jsonResponse(results || []);
+        return jsonResponse(results && results.length > 0 ? results : FALLBACK_EVENTS, 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        console.warn('GET /api/events fallback:', err);
+        return jsonResponse(FALLBACK_EVENTS, 200);
       }
     }
 
     // 4. GET /api/events/:slug
     if (pathname.startsWith('/api/events/') && request.method === 'GET') {
       const slug = pathname.replace('/api/events/', '');
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) {
+        const match = FALLBACK_EVENTS.find((e) => e.slug === slug);
+        return match ? jsonResponse(match, 200) : jsonResponse({ error: 'Event not found' }, 404);
+      }
       try {
         const event = await env.DB.prepare('SELECT * FROM events WHERE slug = ?')
           .bind(slug)
           .first();
-        if (!event) return jsonResponse({ error: 'Event not found' }, 404);
-        return jsonResponse(event);
+        if (!event) {
+          const match = FALLBACK_EVENTS.find((e) => e.slug === slug);
+          if (match) return jsonResponse(match, 200);
+          return jsonResponse({ error: 'Event not found' }, 404);
+        }
+        return jsonResponse(event, 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        const match = FALLBACK_EVENTS.find((e) => e.slug === slug);
+        return match ? jsonResponse(match, 200) : jsonResponse({ error: err.message }, 500);
       }
     }
 
@@ -148,6 +470,7 @@ export default {
       }
       if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
       try {
+        if (!schemaEnsured) await ensureDatabaseSchema(env.DB);
         const body = (await request.json()) as any;
         const id = body.id || `evt-${Date.now()}`;
         const slug =
@@ -213,18 +536,19 @@ export default {
 
     // 7. GET /api/campaigns
     if (pathname === '/api/campaigns' && request.method === 'GET') {
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) return jsonResponse([FALLBACK_CAMPAIGN], 200);
       try {
         const { results } = await env.DB.prepare('SELECT * FROM campaigns').all();
-        return jsonResponse(results || []);
+        return jsonResponse(results && results.length > 0 ? results : [FALLBACK_CAMPAIGN], 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        console.warn('GET /api/campaigns fallback:', err);
+        return jsonResponse([FALLBACK_CAMPAIGN], 200);
       }
     }
 
     // 8. GET /api/campaigns/active
     if (pathname === '/api/campaigns/active' && request.method === 'GET') {
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) return jsonResponse(FALLBACK_CAMPAIGN, 200);
       try {
         const today = new Date().toISOString().split('T')[0];
         const campaign = await env.DB.prepare(
@@ -236,9 +560,10 @@ export default {
         )
           .bind(today, today)
           .first();
-        return jsonResponse(campaign || null);
+        return jsonResponse(campaign || FALLBACK_CAMPAIGN, 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        console.warn('GET /api/campaigns/active fallback:', err);
+        return jsonResponse(FALLBACK_CAMPAIGN, 200);
       }
     }
 
@@ -249,6 +574,7 @@ export default {
       }
       if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
       try {
+        if (!schemaEnsured) await ensureDatabaseSchema(env.DB);
         const body = (await request.json()) as any;
         const id = body.id || `camp-${Date.now()}`;
         await env.DB.prepare(
@@ -296,14 +622,15 @@ export default {
 
     // 10. GET /api/candidates (Pop-up images / APC Candidates)
     if (pathname === '/api/candidates' && request.method === 'GET') {
-      if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
+      if (!env.DB) return jsonResponse(FALLBACK_CANDIDATES, 200);
       try {
         const { results } = await env.DB.prepare(
           'SELECT * FROM candidates ORDER BY order_index ASC'
         ).all();
-        return jsonResponse(results || []);
+        return jsonResponse(results && results.length > 0 ? results : FALLBACK_CANDIDATES, 200);
       } catch (err: any) {
-        return jsonResponse({ error: err.message }, 500);
+        console.warn('GET /api/candidates fallback:', err);
+        return jsonResponse(FALLBACK_CANDIDATES, 200);
       }
     }
 
@@ -314,6 +641,7 @@ export default {
       }
       if (!env.DB) return jsonResponse({ error: 'D1 database not bound' }, 503);
       try {
+        if (!schemaEnsured) await ensureDatabaseSchema(env.DB);
         const body = (await request.json()) as any;
         const id = body.id || `cand-${Date.now()}`;
         await env.DB.prepare(

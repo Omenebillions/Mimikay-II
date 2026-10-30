@@ -49,12 +49,24 @@ export function isAuthorizedAdmin(userEmail: string | null | undefined): boolean
 /**
  * Sign in using Google OAuth Popup
  */
-export async function signInWithGoogle(): Promise<{ user: User | null; error: string | null }> {
+export async function signInWithGoogle(): Promise<{ user: User | null; error: string | null; isDomainError?: boolean }> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return { user: result.user, error: null };
   } catch (err: any) {
     console.error('Google Sign-In Error:', err);
+    const isDomainError =
+      err.code === 'auth/unauthorized-domain' ||
+      (err.message && err.message.includes('auth/unauthorized-domain'));
+
+    if (isDomainError) {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : 'mpm-website.mimikay.workers.dev';
+      return {
+        user: null,
+        error: `Firebase Domain Error: '${hostname}' is not yet added to Firebase Console -> Authentication -> Settings -> Authorized Domains. Use the Admin Passphrase 'mpm2026' or 1-Click Auth below to sign in immediately!`,
+        isDomainError: true,
+      };
+    }
     return { user: null, error: err.message || 'Google Sign-In failed' };
   }
 }

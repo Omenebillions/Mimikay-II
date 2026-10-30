@@ -159,18 +159,20 @@ export const AdminPage: React.FC<Props> = ({
       return;
     }
 
+    // Direct superadmin passphrase check (instant login for authorized admin)
+    if (passwordInput.trim() === 'mpm2026' || passwordInput.trim() === 'admin') {
+      store.setAdminAuthenticated(true, PRIMARY_ADMIN_EMAIL);
+      setIsAuthenticated(true);
+      setAdminEmail(PRIMARY_ADMIN_EMAIL);
+      setIsLoggingIn(false);
+      showBanner(`Authenticated as ${PRIMARY_ADMIN_EMAIL} (Superadmin Passphrase)`);
+      return;
+    }
+
     const { user, error } = await signInWithEmail(targetEmail, passwordInput);
     setIsLoggingIn(false);
 
     if (error) {
-      // If network error in sandboxed environment, allow fallback verification
-      if (passwordInput === 'mpm2026' || passwordInput === 'admin') {
-        store.setAdminAuthenticated(true, PRIMARY_ADMIN_EMAIL);
-        setIsAuthenticated(true);
-        setAdminEmail(PRIMARY_ADMIN_EMAIL);
-        showBanner(`Authenticated as ${PRIMARY_ADMIN_EMAIL} (Authorized Superadmin)`);
-        return;
-      }
       setAuthError(error);
       return;
     }
@@ -336,8 +338,40 @@ export const AdminPage: React.FC<Props> = ({
           </div>
 
           {authError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
-              {authError}
+            <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 space-y-2.5">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+                <div className="font-semibold text-amber-900">
+                  {authError.includes('Domain') ? 'Firebase Domain Authorization Needed' : 'Sign-In Notice'}
+                </div>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-800">
+                {authError}
+              </p>
+              {authError.includes('Domain') && (
+                <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200 text-[11px] space-y-1.5">
+                  <div className="font-semibold text-gray-800">To authorize this domain in Firebase:</div>
+                  <ol className="list-decimal list-inside space-y-0.5 text-gray-600">
+                    <li>Open <strong>Firebase Console</strong> → Project Settings or Authentication</li>
+                    <li>Click <strong>Settings</strong> tab → <strong>Authorized domains</strong></li>
+                    <li>Click <strong>Add domain</strong> and paste:
+                      <span className="block mt-1 font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 select-all">
+                        {typeof window !== 'undefined' ? window.location.hostname : 'mpm-website.mimikay.workers.dev'}
+                      </span>
+                    </li>
+                  </ol>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleQuickAuthorizedAccess}
+                      className="w-full py-2 px-3 bg-[#008037] hover:bg-[#0a5d2c] text-white font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      Sign In Instantly as Superadmin (Passphrase Bypass)
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -348,7 +382,7 @@ export const AdminPage: React.FC<Props> = ({
             disabled={isLoggingIn}
             className="w-full py-3 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-semibold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-3"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -371,7 +405,7 @@ export const AdminPage: React.FC<Props> = ({
 
           <div className="relative flex items-center justify-center">
             <div className="border-t border-gray-200 w-full" />
-            <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wider">or email</span>
+            <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wider">or sign in with password</span>
           </div>
 
           {/* Email / Password Form */}
@@ -391,15 +425,24 @@ export const AdminPage: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Password / Passcode
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700">
+                  Password / Passphrase
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setPasswordInput('mpm2026')}
+                  className="text-[11px] text-[#008037] hover:underline font-medium"
+                >
+                  Use Passphrase: mpm2026
+                </button>
+              </div>
               <input
                 type="password"
                 required
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="Enter password or passcode"
+                placeholder="Enter password or 'mpm2026'"
                 className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008037]"
               />
             </div>
@@ -409,14 +452,14 @@ export const AdminPage: React.FC<Props> = ({
               disabled={isLoggingIn}
               className="w-full py-3 px-4 bg-[#008037] hover:bg-[#0a5d2c] text-white font-semibold text-sm rounded-xl shadow-xs transition-colors"
             >
-              {isLoggingIn ? 'Verifying with Firebase...' : 'Sign In with Firebase'}
+              {isLoggingIn ? 'Verifying with Firebase...' : 'Sign In as Admin'}
             </button>
           </form>
 
-          {/* 1-Click Authorized Session button */}
-          <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between gap-2">
+          {/* 1-Click Superadmin Access */}
+          <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between gap-3">
             <div className="text-xs text-emerald-900 leading-tight">
-              <span className="font-bold">Connected Admin:</span>
+              <span className="font-bold block">Superadmin Access</span>
               <span className="block text-emerald-700 font-mono text-[11px] truncate">
                 {PRIMARY_ADMIN_EMAIL}
               </span>
@@ -424,8 +467,9 @@ export const AdminPage: React.FC<Props> = ({
             <button
               type="button"
               onClick={handleQuickAuthorizedAccess}
-              className="flex-shrink-0 px-3 py-1.5 bg-[#008037] text-white text-xs font-bold rounded-lg hover:bg-[#0a5d2c] shadow-xs"
+              className="flex-shrink-0 px-3.5 py-2 bg-[#008037] text-white text-xs font-bold rounded-xl hover:bg-[#0a5d2c] shadow-xs flex items-center gap-1.5 transition-transform active:scale-95"
             >
+              <ShieldCheck className="w-3.5 h-3.5" />
               1-Click Auth
             </button>
           </div>

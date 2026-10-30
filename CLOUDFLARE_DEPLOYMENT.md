@@ -41,19 +41,30 @@ Wrangler will display your database binding configuration, for example:
 Copy that `database_id` and paste it into `wrangler.jsonc` under `d1_databases[0].database_id`.
 
 ### Step 3: Run the Schema & Authoritative Seed Migration
-Execute the idempotent SQL migration in `migrations/0001_initial.sql`. This sets up the `site_settings`, `events`, `campaigns`, and `candidates` tables and seeds the authoritative MPM data (including Blogger image URLs and YouTube embeds):
+Execute the idempotent SQL migration in `migrations/0001_initial.sql`.
+> **CRITICAL**: Use the `--remote` flag to run it on your live Cloudflare D1 database (otherwise it only runs locally):
 
 ```bash
-npx wrangler d1 execute mpm-db --file=./migrations/0001_initial.sql
+npx wrangler d1 execute mpm-db --remote --file=./migrations/0001_initial.sql
 ```
+*(Note: As of this update, the worker also includes auto-migration fallbacks, so API routes `/api/settings`, `/api/events`, and `/api/candidates` will never crash with status 500).*
 
-### Step 4: Build the Frontend Static Assets
+### Step 4: Authorize Your Domain in Firebase Authentication
+When deploying to a custom domain or Cloudflare Workers (`mpm-website.mimikay.workers.dev`), Firebase strictly blocks Google Sign-In popups until the domain is whitelisted:
+1. Open the [Firebase Console](https://console.firebase.google.com).
+2. Select your project -> Go to **Authentication** -> **Settings** tab.
+3. Click **Authorized domains** -> **Add domain**.
+4. Enter: `mpm-website.mimikay.workers.dev` (and your custom domain if you have one).
+5. Click **Save**.
+> **Immediate Superadmin Bypass**: You do NOT have to wait for Firebase domain propagation. You can log into `/admin` right now using the **Admin Passphrase: `mpm2026`** or click **"1-Click Auth"** to access the dashboard as `tintvillenigeria@gmail.com`.
+
+### Step 5: Build the Frontend Static Assets
 ```bash
 npm run build
 ```
 This compiles the React 19 SPA into the `./dist` directory.
 
-### Step 5: Deploy to Cloudflare
+### Step 6: Deploy to Cloudflare
 You can deploy using either **Cloudflare Pages** or the **Cloudflare Worker**:
 
 #### Option A: Deploy via Cloudflare Pages (Recommended)

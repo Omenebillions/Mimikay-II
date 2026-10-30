@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { store } from './services/store';
 import { MPMEvent, SiteSettings, CampaignPopup, CorePillar, APCCandidate } from './types';
 
@@ -36,17 +37,16 @@ export default function App() {
   // 5 APC Candidates swipable modal state
   const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
 
-  // Auto trigger the 5 APC candidates modal on first visit to homepage
+  // Auto trigger the candidates modal EVERY TIME the home page is loaded
   useEffect(() => {
     const isHome = currentPath === '/' || currentPath === '';
     if (isHome) {
-      const hasDismissed = sessionStorage.getItem('mpm_candidates_dismissed_session');
-      if (!hasDismissed) {
-        const timer = setTimeout(() => {
-          setIsCandidateModalOpen(true);
-        }, 1800);
-        return () => clearTimeout(timer);
-      }
+      const timer = setTimeout(() => {
+        setIsCandidateModalOpen(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    } else {
+      setIsCandidateModalOpen(false);
     }
   }, [currentPath]);
 
@@ -94,7 +94,6 @@ export default function App() {
 
   const handleCloseCandidateModal = () => {
     setIsCandidateModalOpen(false);
-    sessionStorage.setItem('mpm_candidates_dismissed_session', 'true');
   };
 
   // Route matching
@@ -201,9 +200,19 @@ export default function App() {
         />
       )}
 
-      {/* Main Page Body */}
-      <main id="main-content" className="flex-1 focus:outline-none">
-        {renderCurrentRoute()}
+      {/* Main Page Body with Framer-like transition flow */}
+      <main id="main-content" className="flex-1 focus:outline-none overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPath}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {renderCurrentRoute()}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Public Footer */}
